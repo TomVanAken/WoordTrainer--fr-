@@ -28,10 +28,16 @@ export function pickExamCards(cards: Card[], p: Progress, rng: Rng): Card[] {
   const n = Math.min(EXAM_SIZE, cards.length)
   if (n === 0) return []
 
+  const wrong = (c: Card) => p.cards[c.id]?.wrongTotal ?? 0
+
+  // First pass: one card per entry, the direction with the higher wrongTotal (ties at random),
+  // so a card that is only hard in one direction can still reach the hard half.
   const firstPass: Card[] = []
   const secondPass: Card[] = []
   for (const group of shuffle([...groupByEntry(cards).values()], rng)) {
-    const i = Math.floor(rng() * group.length)
+    const max = Math.max(...group.map(wrong))
+    const top = group.map((c, k) => (wrong(c) === max ? k : -1)).filter(k => k >= 0)
+    const i = top[Math.floor(rng() * top.length)]
     firstPass.push(group[i])
     secondPass.push(...group.filter((_, k) => k !== i))
   }
@@ -39,7 +45,6 @@ export function pickExamCards(cards: Card[], p: Progress, rng: Rng): Card[] {
   if (candidates.length < n) candidates.push(...shuffle(secondPass, rng).slice(0, n - candidates.length))
   const firstIds = new Set(firstPass.map(c => c.id))
 
-  const wrong = (c: Card) => p.cards[c.id]?.wrongTotal ?? 0
   const hard = shuffle(candidates.filter(c => wrong(c) > 0), rng)
     .sort((x, y) => wrong(y) - wrong(x))
     .slice(0, Math.floor(n / 2))

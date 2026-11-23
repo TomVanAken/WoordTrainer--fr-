@@ -93,12 +93,26 @@ test('exam: fewer than 50 cards in total gives all of them, with pairs far apart
 })
 
 test('exam: with 30 entries (60 cards) 50 are picked and the hardest card is kept', () => {
+  // only ONE direction is hard: that exact card must be among the 50, whatever the seed
   const p = emptyProgress()
-  p.cards['e0|fr-nl'] = { inARow: 0, wrongTotal: 9 }
   p.cards['e0|nl-fr'] = { inARow: 0, wrongTotal: 9 }
-  const picked = pickExamCards(makeCards(30), p, seeded(2))
-  expect(picked).toHaveLength(50)
-  expect(new Set(picked.map((c) => c.id)).size).toBe(50)
+  for (let seed = 1; seed <= 20; seed++) {
+    const picked = pickExamCards(makeCards(30), p, seeded(seed))
+    expect(picked).toHaveLength(50)
+    expect(new Set(picked.map((c) => c.id)).size).toBe(50)
+    expect(picked.map((c) => c.id)).toContain('e0|nl-fr')
+  }
+})
+
+test('exam: hard cards on one direction only are all in the hard half', () => {
+  // 30 cards wrongTotal 1..30, each on the nl-fr direction only; their fr-nl twins are at 0
+  const cards = makeCards(120)
+  const p = emptyProgress()
+  for (let i = 0; i < 30; i++) p.cards[`e${i}|nl-fr`] = { inARow: 0, wrongTotal: i + 1 }
+  for (let seed = 1; seed <= 10; seed++) {
+    const ids = new Set(pickExamCards(cards, p, seeded(seed)).map((c) => c.id))
+    for (let i = 5; i < 30; i++) expect(ids.has(`e${i}|nl-fr`)).toBe(true)
+  }
 })
 
 test('exam: cards with wrongTotal > 0 outside the top half are still eligible as easy cards', () => {
