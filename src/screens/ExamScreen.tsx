@@ -95,7 +95,8 @@ export function ExamScreen({ cards, chapterTitles = {}, progress, update, rng, c
           {card.prompt}
         </p>
       </div>
-      <AnswerInput onSubmit={submit} questionKey={index} />
+      {/* "Weet ik niet" is saved as an empty answer, which scoreExam counts as wrong. */}
+      <AnswerInput onSubmit={submit} onDontKnow={() => submit('')} questionKey={index} />
       <button type="button" className="btn btn-link" onClick={onExit}>
         Stoppen (je kunt later verder)
       </button>

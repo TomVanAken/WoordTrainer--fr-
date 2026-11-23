@@ -26,7 +26,7 @@ export function ExamResultView({ result, cardsById, onHome }: Props) {
                 <li key={`${r.cardId}-${i}`}>
                   <strong>{card?.prompt}</strong>
                   <br />
-                  Jij typte: <em>{r.typed}</em>
+                  {r.typed.trim() === '' ? '(weet ik niet)' : <>Jij typte: <em>{r.typed}</em></>}
                   <br />
                   Juist: <strong>{card?.display}</strong>
                 </li>

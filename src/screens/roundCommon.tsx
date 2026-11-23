@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type MouseEvent, type PointerEvent } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Celebration } from '../components/Celebration.tsx'
 import { pickRoundCards } from '../session/select.ts'
 import { createRound } from '../session/round.ts'
@@ -44,15 +44,6 @@ export function useCelebrations() {
   const [first] = queue
   const node = first ? <Celebration key={first.label} kind={first.kind} label={first.label} onDone={next} /> : null
   return { add, node }
-}
-
-/**
- * Spread on buttons shown next to the answer input: tapping them must not move the focus away
- * from the input, or a phone closes its keyboard (and iOS won't reopen it programmatically).
- */
-export const keepInputFocus = {
-  onMouseDown: (e: MouseEvent) => e.preventDefault(),
-  onPointerDown: (e: PointerEvent) => e.preventDefault(),
 }
 
 export function EmptyRound({ onExit }: { onExit: ScreenProps['onExit'] }) {

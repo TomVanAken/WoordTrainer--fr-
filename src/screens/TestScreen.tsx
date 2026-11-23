@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AnswerInput } from '../components/AnswerInput.tsx'
+import { keepInputFocus } from '../components/keepInputFocus.ts'
 import { checkAnswer } from '../cards/checkAnswer.ts'
 import { answerRound, currentItem } from '../session/round.ts'
 import { awardBadges, recordTyped } from '../progress/rules.ts'
@@ -7,14 +8,13 @@ import { RoundSummary } from './RoundSummary.tsx'
 import {
   EmptyRound,
   directionLabel,
-  keepInputFocus,
   useCelebrations,
   useRound,
   type CelebrationItem,
   type ScreenProps,
 } from './roundCommon.tsx'
 
-type Feedback = { correct: boolean; typed: string; retry: boolean }
+type Feedback = { correct: boolean; typed: string; retry: boolean; dontKnow: boolean }
 
 export function TestScreen(props: ScreenProps) {
   const { cards, allCards, chapterTitles = {}, progress, update, onExit } = props
@@ -44,8 +44,9 @@ export function TestScreen(props: ScreenProps) {
   const current = item!
   const card = cards.find((c) => c.id === current.cardId)!
 
-  const submit = (typed: string) => {
-    const correct = checkAnswer(typed, card)
+  // "Weet ik niet" (dontKnow) counts exactly like a wrong answer.
+  const answer = (typed: string, dontKnow: boolean) => {
+    const correct = !dontKnow && checkAnswer(typed, card)
     if (!current.retry) {
       // update() runs the callback synchronously on the latest progress, so we can read its result.
       let best = progress.bestStreak
@@ -68,7 +69,7 @@ export function TestScreen(props: ScreenProps) {
       }
       celebrations.add(items)
     }
-    setFeedback({ correct, typed, retry: current.retry })
+    setFeedback({ correct, typed, retry: current.retry, dontKnow })
   }
 
   const next = () => {
@@ -93,16 +94,25 @@ export function TestScreen(props: ScreenProps) {
           {card.prompt}
         </p>
       </div>
-      <AnswerInput onSubmit={submit} readOnly={feedback !== null} onContinue={next} />
+      <AnswerInput
+        onSubmit={(typed) => answer(typed, false)}
+        onDontKnow={() => answer('', true)}
+        readOnly={feedback !== null}
+        onContinue={next}
+      />
       {feedback && (
         <div className={`feedback ${feedback.correct ? 'feedback-ok' : 'feedback-bad'}`} role="status">
           {feedback.correct ? (
             <p className="feedback-title">{feedback.retry ? 'Goed!' : 'Goed! +3'}</p>
           ) : (
             <>
-              <p>
-                Jij typte: <em>{feedback.typed}</em>
-              </p>
+              {feedback.dontKnow ? (
+                <p>Je wist het niet.</p>
+              ) : (
+                <p>
+                  Jij typte: <em>{feedback.typed}</em>
+                </p>
+              )}
               <p>
                 Juist: <strong>{card.display}</strong>
               </p>

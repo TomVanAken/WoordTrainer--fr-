@@ -241,3 +241,48 @@ test('Test: submit then an immediate second Enter advances exactly once and reco
   await userEvent.keyboard('{Enter}')
   expect(prompt()).toBe(second)
 })
+
+test('Test: "Weet ik niet" counts as a wrong answer and the card comes back as a retry', async () => {
+  setup(all, { ...emptyProgress(), points: 5, currentStreak: 2, bestStreak: 2 })
+  const missed = prompt()
+  const missedCard = all.find((c) => c.prompt === missed)!
+  await userEvent.click(screen.getByRole('button', { name: 'Weet ik niet' }))
+  expect(screen.getByText('Je wist het niet.')).toBeInTheDocument()
+  expect(screen.getByText(/Juist:/)).toHaveTextContent(`Juist: ${missedCard.display}`)
+  expect(screen.queryByText(/Jij typte/)).not.toBeInTheDocument()
+  // not offered during feedback; the input keeps the focus
+  expect(screen.queryByRole('button', { name: 'Weet ik niet' })).not.toBeInTheDocument()
+  expect(input()).toHaveFocus()
+  expect(prog().currentStreak).toBe(0)
+  expect(prog().points).toBe(5)
+  expect(prog().cards[missedCard.id]).toEqual({ inARow: 0, wrongTotal: 1 })
+  expect(screen.getByTestId('round-points')).toHaveTextContent('0')
+  await userEvent.keyboard('{Enter}')
+  expect(screen.getByRole('button', { name: 'Weet ik niet' })).toBeInTheDocument()
+  for (let i = 0; i < 3 && prompt() !== missed; i++) {
+    await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+    await userEvent.keyboard('{Enter}')
+  }
+  expect(prompt()).toBe(missed)
+  // a "Weet ik niet" on the retry only puts the card back in the round
+  const before = prog()
+  await userEvent.click(screen.getByRole('button', { name: 'Weet ik niet' }))
+  expect(screen.getByText('Je wist het niet.')).toBeInTheDocument()
+  expect(prog()).toEqual(before)
+  await userEvent.keyboard('{Enter}')
+  expect(prompt()).toBe(missed) // last card left, so it is asked again right away
+  await userEvent.type(input(), correctFor(missed) + '{Enter}')
+  await userEvent.keyboard('{Enter}')
+  expect(screen.getByText(/2 van de 3/)).toBeInTheDocument()
+})
+
+test('Test: "Weet ik niet" does not take the focus and clears a half-typed answer', async () => {
+  setup()
+  await userEvent.type(input(), 'mai')
+  const btn = screen.getByRole('button', { name: 'Weet ik niet' })
+  expect(fireEvent.mouseDown(btn)).toBe(false)
+  await userEvent.click(btn)
+  expect(input()).toHaveFocus()
+  await userEvent.keyboard('{Enter}')
+  expect(input()).toHaveValue('')
+})
