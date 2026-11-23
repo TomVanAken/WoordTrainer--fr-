@@ -40,3 +40,8 @@ test('ChapterPicker back button', async () => {
   await userEvent.click(screen.getByRole('button', { name: /Terug/ }))
   expect(onBack).toHaveBeenCalled()
 })
+
+test('exam mode with a saved exam labels the start button as replacing it', () => {
+  render(<ChapterPicker chapters={chapters} mode="exam" hasSavedExam onConfirm={() => {}} onBack={() => {}} />)
+  expect(screen.getByRole('button', { name: 'Nieuw examen (het vorige vervalt)' })).toBeInTheDocument()
+})

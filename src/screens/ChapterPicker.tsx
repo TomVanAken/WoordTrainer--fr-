@@ -5,13 +5,15 @@ import type { Mode } from './Home.tsx'
 type Props = {
   chapters: Chapter[]
   mode: Mode
+  /** An exam is saved; starting a new one replaces it. */
+  hasSavedExam?: boolean
   onConfirm: (chapterIds: string[]) => void
   onBack: () => void
 }
 
 const TITLES: Record<Mode, string> = { practice: 'Oefenen', test: 'Toets', exam: 'Examen' }
 
-export function ChapterPicker({ chapters, mode, onConfirm, onBack }: Props) {
+export function ChapterPicker({ chapters, mode, hasSavedExam, onConfirm, onBack }: Props) {
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(mode === 'exam' ? chapters.map((c) => c.id) : []),
   )
@@ -51,7 +53,7 @@ export function ChapterPicker({ chapters, mode, onConfirm, onBack }: Props) {
         disabled={selected.size === 0}
         onClick={() => onConfirm(chapters.filter((c) => selected.has(c.id)).map((c) => c.id))}
       >
-        Starten
+        {mode === 'exam' && hasSavedExam ? 'Nieuw examen (het vorige vervalt)' : 'Starten'}
       </button>
       <button type="button" className="btn btn-link" onClick={onBack}>
         ← Terug

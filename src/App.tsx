@@ -4,6 +4,7 @@ import { ChapterGate } from './components/ChapterGate.tsx'
 import { chaptersBaseUrl, loadChapters } from './data/loadChapters.ts'
 import { buildCards, cardsForChapters } from './cards/buildCards.ts'
 import { PracticeScreen } from './screens/PracticeScreen.tsx'
+import { ExamScreen } from './screens/ExamScreen.tsx'
 import { TestScreen } from './screens/TestScreen.tsx'
 import { useProgress } from './state/useProgress.ts'
 import { Home, type Mode } from './screens/Home.tsx'
@@ -35,6 +36,7 @@ function Trainer({ chapters, failed }: { chapters: Chapter[]; failed: string[] }
         <ChapterPicker
           chapters={chapters}
           mode={screen.mode}
+          hasSavedExam={progress.exam !== null}
           onBack={home}
           onConfirm={(chapterIds) =>
             setScreen(screen.mode === 'exam' ? { name: 'exam', chapterIds } : { name: screen.mode, chapterIds })
@@ -69,12 +71,16 @@ function Trainer({ chapters, failed }: { chapters: Chapter[]; failed: string[] }
     }
     case 'exam':
       return (
-        <main className="screen">
-          <p>Binnenkort beschikbaar: {screen.name}</p>
-          <button type="button" className="btn btn-link" onClick={home}>
-            ← Terug
-          </button>
-        </main>
+        <ExamScreen
+          key="exam"
+          cards={cards}
+          chapterTitles={chapterTitles}
+          progress={progress}
+          update={update}
+          rng={rng}
+          chapterIds={screen.chapterIds}
+          onExit={home}
+        />
       )
     case 'home':
       return (

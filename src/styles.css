@@ -68,3 +68,8 @@ body {
 .summary-big { font-size: 1.5rem; font-weight: 700; margin: 0; }
 @keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .celebration { animation: none; } }
+
+.score-percent { font-size: 3rem; font-weight: 700; margin: 0; color: #1a1a1a; }
+.score-count { font-size: 1.25rem; margin: 0 0 1rem; color: #1a1a1a; }
+.wrong-list { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: 0.5rem; }
+.wrong-list li { background: #fff; color: #1a1a1a; border: 1px solid #c9c9c9; border-radius: 8px; padding: 0.6rem 0.8rem; }
