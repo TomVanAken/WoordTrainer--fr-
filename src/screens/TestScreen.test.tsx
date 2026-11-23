@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TestScreen } from './TestScreen.tsx'
 import { buildCards } from '../cards/buildCards.ts'
@@ -54,7 +54,10 @@ const prompt = () => screen.getByTestId('prompt').textContent!
 const input = () => screen.getByRole('textbox')
 const correctFor = (p: string) => all.find((c) => c.prompt === p)!.answers[0].text
 
-afterEach(() => localStorage.clear())
+afterEach(() => {
+  vi.useRealTimers()
+  localStorage.clear()
+})
 
 test('Test: correct answer shows "Goed! +3", adds 3 points and raises the streak', async () => {
   setup()
@@ -132,14 +135,47 @@ test('Test: all cards known shows the "Probeer een Examen" message', async () =>
   expect(onExit).toHaveBeenCalledWith(true)
 })
 
-test('Test: beating the best streak shows the record celebration once', async () => {
+test('Test: beating an existing record shows the record celebration once, then it closes itself', () => {
+  // fake timers make the 1.5 s auto-dismiss deterministic; fireEvent is synchronous, so no
+  // user-event delays depend on the faked clock
+  vi.useFakeTimers()
+  setup(all, { ...emptyProgress(), bestStreak: 1 })
+  const answer = (text: string) => {
+    fireEvent.change(input(), { target: { value: text } })
+    fireEvent.keyDown(input(), { key: 'Enter' })
+  }
+  const enter = () => fireEvent.keyDown(input(), { key: 'Enter' })
+  answer(correctFor(prompt()))
+  // a streak of 1 only equals the record
+  expect(screen.queryByText(/Nieuw record/)).not.toBeInTheDocument()
+  enter()
+  answer(correctFor(prompt()))
+  expect(screen.getAllByText(/Nieuw record/)).toHaveLength(1)
+  expect(screen.getByText(/Nieuw record/)).toHaveTextContent('Nieuw record! Reeks van 2')
+  act(() => {
+    vi.advanceTimersByTime(1000)
+  })
+  enter()
+  answer(correctFor(prompt()))
+  // the third correct answer beats the record again, but it is celebrated only once
+  expect(screen.getAllByText(/Nieuw record/)).toHaveLength(1)
+  act(() => {
+    vi.advanceTimersByTime(500)
+  })
+  expect(screen.queryByText(/Nieuw record/)).not.toBeInTheDocument()
+})
+
+test('Test: the very first correct answer ever is not celebrated as a record', async () => {
   setup()
   await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
-  expect(screen.getAllByText(/Nieuw record/)).toHaveLength(1)
-  await userEvent.keyboard('{Enter}')
+  expect(screen.getByText('Goed! +3')).toBeInTheDocument()
+  expect(screen.queryByText(/Nieuw record/)).not.toBeInTheDocument()
+})
+
+test('Test: the record celebration can be closed with its button', async () => {
+  setup(all, { ...emptyProgress(), bestStreak: 1, currentStreak: 1 })
   await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
-  // the second correct answer beats the record again, but it is celebrated only once
-  expect(screen.getAllByText(/Nieuw record/)).toHaveLength(1)
+  expect(screen.getByText(/Nieuw record/)).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Sluiten' }))
   expect(screen.queryByText(/Nieuw record/)).not.toBeInTheDocument()
 })
@@ -152,9 +188,56 @@ test('Test: a badge celebration names the chapter', async () => {
   }
   setup([target], almost)
   await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
-  // celebrations are shown one at a time: the record first, then the badge
-  expect(screen.getByText(/Nieuw record/)).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: 'Sluiten' }))
+  // no record (best streak was 0 at the start), so the badge shows right away
+  expect(screen.queryByText(/Nieuw record/)).not.toBeInTheDocument()
   expect(screen.getByText(/Badge.*Hoofdstuk 0/)).toBeInTheDocument()
   expect(prog().badges).toEqual(['ch00'])
+})
+
+test('Test: the answer input keeps focus during feedback (the phone keyboard stays open)', async () => {
+  setup()
+  await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  expect(screen.getByText('Goed! +3')).toBeInTheDocument()
+  expect(input()).toHaveFocus()
+  expect(input()).not.toBeDisabled()
+  expect(input()).toHaveAttribute('readonly')
+  expect(screen.getByRole('button', { name: 'Volgende' })).not.toHaveFocus()
+})
+
+test('Test: Enter in the input during feedback goes to the next question', async () => {
+  setup()
+  const first = prompt()
+  await userEvent.type(input(), correctFor(first) + '{Enter}')
+  await userEvent.keyboard('{Enter}')
+  expect(prompt()).not.toBe(first)
+  expect(screen.queryByText(/Goed!/)).not.toBeInTheDocument()
+  expect(input()).toHaveFocus()
+  expect(input()).not.toHaveAttribute('readonly')
+  expect(input()).toHaveValue('')
+})
+
+test('Test: tapping Volgende does not take focus away from the input', async () => {
+  setup()
+  const first = prompt()
+  await userEvent.type(input(), correctFor(first) + '{Enter}')
+  const volgende = screen.getByRole('button', { name: 'Volgende' })
+  expect(fireEvent.mouseDown(volgende)).toBe(false) // default prevented
+  expect(fireEvent.pointerDown(volgende)).toBe(false)
+  await userEvent.click(volgende)
+  expect(prompt()).not.toBe(first)
+  expect(input()).toHaveFocus()
+})
+
+test('Test: submit then an immediate second Enter advances exactly once and records one answer', async () => {
+  setup()
+  const first = prompt()
+  await userEvent.type(input(), correctFor(first) + '{Enter}{Enter}')
+  const second = prompt()
+  expect(second).not.toBe(first)
+  expect(screen.queryByText(/Goed!/)).not.toBeInTheDocument()
+  expect(Object.keys(prog().cards)).toHaveLength(1)
+  expect(prog().points).toBe(3)
+  // and the new question is waiting, not skipped
+  await userEvent.keyboard('{Enter}')
+  expect(prompt()).toBe(second)
 })

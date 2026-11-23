@@ -7,7 +7,7 @@ import { RoundSummary } from './RoundSummary.tsx'
 import {
   EmptyRound,
   directionLabel,
-  useAutoFocus,
+  keepInputFocus,
   useCelebrations,
   useRound,
   type CelebrationItem,
@@ -21,7 +21,6 @@ export function TestScreen(props: ScreenProps) {
   const { round, setRound, points, setPoints, restart, startBest, recordShown } = useRound(props)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const celebrations = useCelebrations()
-  const nextRef = useAutoFocus<HTMLButtonElement>(feedback !== null)
 
   if (round.total === 0) return <EmptyRound onExit={onExit} />
   const item = currentItem(round)
@@ -59,7 +58,8 @@ export function TestScreen(props: ScreenProps) {
       })
       if (correct) setPoints((n) => n + 3)
       const items: CelebrationItem[] = []
-      if (best > startBest.current && !recordShown.current) {
+      // No record on his very first streak ever: there was nothing to beat yet.
+      if (startBest.current > 0 && best > startBest.current && !recordShown.current) {
         recordShown.current = true
         items.push({ kind: 'record', label: `Nieuw record! Reeks van ${best}` })
       }
@@ -72,7 +72,8 @@ export function TestScreen(props: ScreenProps) {
   }
 
   const next = () => {
-    setRound(answerRound(round, feedback!.correct))
+    if (!feedback) return
+    setRound(answerRound(round, feedback.correct))
     setFeedback(null)
   }
 
@@ -92,8 +93,7 @@ export function TestScreen(props: ScreenProps) {
           {card.prompt}
         </p>
       </div>
-      <AnswerInput onSubmit={submit} disabled={feedback !== null} />
-      {celebrations.node}
+      <AnswerInput onSubmit={submit} readOnly={feedback !== null} onContinue={next} />
       {feedback && (
         <div className={`feedback ${feedback.correct ? 'feedback-ok' : 'feedback-bad'}`} role="status">
           {feedback.correct ? (
@@ -108,11 +108,12 @@ export function TestScreen(props: ScreenProps) {
               </p>
             </>
           )}
-          <button ref={nextRef} type="button" className="btn btn-primary" onClick={next}>
+          <button type="button" className="btn btn-primary" {...keepInputFocus} onClick={next}>
             Volgende
           </button>
         </div>
       )}
+      {celebrations.node}
       <button type="button" className="btn btn-link" onClick={() => onExit()}>
         Stoppen
       </button>

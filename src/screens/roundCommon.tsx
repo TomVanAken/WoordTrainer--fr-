@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState, type MouseEvent, type PointerEvent } from 'react'
 import { Celebration } from '../components/Celebration.tsx'
 import { pickRoundCards } from '../session/select.ts'
 import { createRound } from '../session/round.ts'
@@ -46,13 +46,13 @@ export function useCelebrations() {
   return { add, node }
 }
 
-// Focus the "continue" control when it appears so Enter works right away.
-export function useAutoFocus<T extends HTMLElement>(active: boolean) {
-  const ref = useRef<T>(null)
-  useEffect(() => {
-    if (active) ref.current?.focus()
-  }, [active])
-  return ref
+/**
+ * Spread on buttons shown next to the answer input: tapping them must not move the focus away
+ * from the input, or a phone closes its keyboard (and iOS won't reopen it programmatically).
+ */
+export const keepInputFocus = {
+  onMouseDown: (e: MouseEvent) => e.preventDefault(),
+  onPointerDown: (e: PointerEvent) => e.preventDefault(),
 }
 
 export function EmptyRound({ onExit }: { onExit: ScreenProps['onExit'] }) {
