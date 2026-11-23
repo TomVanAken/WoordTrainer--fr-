@@ -14,9 +14,16 @@ Tests draaien met `npm test`, de hoofdstukken controleren met `npm run check-cha
 
 ## Publiceren (gratis, via GitHub Pages)
 
-1. Maak een **openbare** (public) repo op GitHub en push de code naar de branch `main`.
-2. Ga naar Settings → Pages en kies bij Source: **GitHub Actions**.
-3. Na een paar minuten staat de app online. Open de link op de telefoon en kies "Zet op beginscherm" om hem als app te gebruiken.
+Doe het in deze volgorde, anders mislukt de eerste publicatie:
+
+1. Maak op GitHub een nieuwe, **openbare** (public) repo aan. Push nog niets.
+2. Ga in die repo naar Settings → Pages en kies bij Source: **GitHub Actions**.
+3. Push nu de code naar de branch `main`. De publicatie start vanzelf (tabblad Actions → Deploy).
+4. Is die eerste run toch mislukt? Ga naar Actions → Deploy, open de mislukte run en klik op **Re-run jobs**.
+5. Na een paar minuten staat de app online. De link staat bovenaan bij Settings → Pages ("Your site is live at …").
+6. Open de link op de telefoon en zet de app op het beginscherm:
+   - **iPhone** (Safari): deelknop → **Zet op beginscherm**.
+   - **Android** (Chrome): menu ⋮ → **Toevoegen aan startscherm** of **App installeren**.
 
 Alleen een wijziging in de code zorgt voor een nieuwe publicatie. Een nieuw hoofdstuk niet.
 
