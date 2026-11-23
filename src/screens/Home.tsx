@@ -31,17 +31,7 @@ export function Home({ progress, chapters, cards, onStart, onResumeExam, onSetti
         </div>
       </div>
 
-      <ul className="tiles">
-        {chapters.map((ch) => (
-          <ChapterTile
-            key={ch.id}
-            title={ch.title}
-            percent={chapterStats(progress, cards, ch.id).percent}
-            earned={progress.badges.includes(ch.id)}
-          />
-        ))}
-      </ul>
-
+      {/* Modes first, so they stay above the fold on a phone as chapters are added. */}
       <div className="modes">
         <button type="button" className="btn btn-practice" onClick={() => onStart('practice')}>
           🃏 Oefenen
@@ -61,6 +51,17 @@ export function Home({ progress, chapters, cards, onStart, onResumeExam, onSetti
           </>
         )}
       </div>
+
+      <ul className="tiles">
+        {chapters.map((ch) => (
+          <ChapterTile
+            key={ch.id}
+            title={ch.title}
+            percent={chapterStats(progress, cards, ch.id).percent}
+            earned={progress.badges.includes(ch.id)}
+          />
+        ))}
+      </ul>
 
       <button type="button" className="btn btn-link" onClick={onSettings}>
         ⚙️ Instellingen

@@ -56,3 +56,12 @@ test('Home mode buttons start the right mode', async () => {
   await userEvent.click(screen.getByRole('button', { name: /Toets/ }))
   expect(handlers.onStart).toHaveBeenCalledWith('test')
 })
+
+test('Home puts the mode buttons above the chapter tiles', () => {
+  setup({ ...emptyProgress(), exam: { cardIds: [cards[0].id], answers: [] } })
+  const tile = screen.getByText('Hoofdstuk 0')
+  for (const name of [/Oefenen/, /Toets/, /^🎓 Examen$/, /Examen hervatten/]) {
+    const btn = screen.getByRole('button', { name })
+    expect(btn.compareDocumentPosition(tile) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  }
+})
