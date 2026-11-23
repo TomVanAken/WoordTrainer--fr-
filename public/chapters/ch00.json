@@ -2,19 +2,19 @@
   "id": "ch00",
   "title": "Hoofdstuk 0: Voorbeeld",
   "entries": [
-    { "id": "ch00-001", "fr": ["une maison"], "nl": ["het huis", "de woning"] },
-    { "id": "ch00-002", "fr": ["un logement"], "nl": ["de woning"] },
-    { "id": "ch00-003", "fr": ["une école"], "nl": ["de school"] },
-    { "id": "ch00-004", "fr": ["des vacances"], "nl": ["de vakantie"] },
-    { "id": "ch00-005", "fr": ["à la maison"], "nl": ["thuis"] },
-    { "id": "ch00-006", "fr": ["marcher"], "nl": ["wandelen"] },
-    { "id": "ch00-007", "fr": ["content(e)"], "nl": ["blij", "tevreden"] },
-    { "id": "ch00-008", "fr": ["s'occuper de (qn)"], "nl": ["voor (iemand) zorgen"] },
-    { "id": "ch00-009", "fr": ["une sœur"], "nl": ["de zus"] },
-    { "id": "ch00-010", "fr": ["lundi"], "nl": ["maandag"] },
-    { "id": "ch00-011", "fr": ["français"], "nl": ["Frans"], "nlCaps": true },
-    { "id": "ch00-012", "fr": ["un Français"], "nl": ["een Fransman"], "frCaps": true, "nlCaps": true },
-    { "id": "ch00-013", "fr": ["Ça va ?"], "nl": ["Hoe gaat het?"] },
-    { "id": "ch00-014", "fr": ["aujourd'hui"], "nl": ["vandaag"] }
+    { "id": "ch00-001", "fr": ["une maison"], "nl": ["het huis", "de woning"], "hint": "" },
+    { "id": "ch00-002", "fr": ["un logement"], "nl": ["de woning"], "hint": "" },
+    { "id": "ch00-003", "fr": ["une école"], "nl": ["de school"], "hint": "" },
+    { "id": "ch00-004", "fr": ["des vacances"], "nl": ["de vakantie"], "hint": "" },
+    { "id": "ch00-005", "fr": ["à la maison"], "nl": ["thuis"], "hint": "" },
+    { "id": "ch00-006", "fr": ["marcher"], "nl": ["wandelen"], "hint": "" },
+    { "id": "ch00-007", "fr": ["content(e)"], "nl": ["blij", "tevreden"], "hint": "" },
+    { "id": "ch00-008", "fr": ["s'occuper de (qn)"], "nl": ["voor (iemand) zorgen"], "hint": "" },
+    { "id": "ch00-009", "fr": ["une sœur"], "nl": ["de zus"], "hint": "" },
+    { "id": "ch00-010", "fr": ["lundi"], "nl": ["maandag"], "hint": "" },
+    { "id": "ch00-011", "fr": ["français"], "nl": ["Frans"], "hint": "", "nlCaps": true },
+    { "id": "ch00-012", "fr": ["un Français"], "nl": ["een Fransman"], "hint": "", "frCaps": true, "nlCaps": true },
+    { "id": "ch00-013", "fr": ["Ça va ?"], "nl": ["Hoe gaat het?"], "hint": "" },
+    { "id": "ch00-014", "fr": ["aujourd'hui"], "nl": ["vandaag"], "hint": "" }
   ]
 }
