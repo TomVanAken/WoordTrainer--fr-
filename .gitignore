@@ -23,3 +23,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Textbook photos (copyrighted, only the transcribed chapter JSON is committed)
+textbook-photos/
