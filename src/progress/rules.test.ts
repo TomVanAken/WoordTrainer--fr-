@@ -87,3 +87,9 @@ test('examResumable is false when one card is missing', () => {
   expect(examResumable({ cardIds: ['ch01-0|fr-nl', 'ch01-1|fr-nl'], answers: [] }, byId)).toBe(true)
   expect(examResumable({ cardIds: ['ch01-0|fr-nl', 'zzz'], answers: [] }, byId)).toBe(false)
 })
+
+test('chapterStats percent has no floating-point error (57/100, 58/100)', () => {
+  const all = cards('ch01', 100)
+  expect(chapterStats(withKnown(all.slice(0, 57).map(c => c.id)), all, 'ch01').percent).toBe(57)
+  expect(chapterStats(withKnown(all.slice(0, 58).map(c => c.id)), all, 'ch01').percent).toBe(58)
+})

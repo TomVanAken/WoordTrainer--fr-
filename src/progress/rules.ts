@@ -42,7 +42,7 @@ export function chapterStats(
   const inChapter = cards.filter(c => c.chapterId === chapterId)
   const total = inChapter.length
   const known = inChapter.filter(c => isKnown(p, c.id)).length
-  return { known, total, percent: total === 0 ? 0 : Math.floor((known / total) * 100) }
+  return { known, total, percent: total === 0 ? 0 : Math.floor((known * 100) / total) }
 }
 
 export function awardBadges(p: Progress, cards: Card[]): { progress: Progress; newBadges: string[] } {
