@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 import type { Chapter } from './types.ts'
 import { ChapterGate } from './components/ChapterGate.tsx'
 import { chaptersBaseUrl, loadChapters } from './data/loadChapters.ts'
-import { buildCards } from './cards/buildCards.ts'
+import { buildCards, cardsForChapters } from './cards/buildCards.ts'
+import { PracticeScreen } from './screens/PracticeScreen.tsx'
+import { TestScreen } from './screens/TestScreen.tsx'
 import { useProgress } from './state/useProgress.ts'
 import { Home, type Mode } from './screens/Home.tsx'
 import { ChapterPicker } from './screens/ChapterPicker.tsx'
@@ -21,12 +23,11 @@ const loadAppChapters = () => loadChapters(chaptersBaseUrl())
 function Trainer({ chapters, failed }: { chapters: Chapter[]; failed: string[] }) {
   const cards = useMemo(() => buildCards(chapters), [chapters])
   const cardIds = useMemo(() => new Set(cards.map((c) => c.id)), [cards])
-  const { progress, reset } = useProgress(cardIds, failed.length === 0)
+  const { progress, update, reset } = useProgress(cardIds, failed.length === 0)
   const [screen, setScreen] = useState<Screen>({ name: 'home' })
   const home = () => setScreen({ name: 'home' })
-  // Tasks 8/9 will hand this rng to the session screens.
   const rng = Math.random
-  void rng
+  const chapterTitles = useMemo(() => Object.fromEntries(chapters.map((c) => [c.id, c.title])), [chapters])
 
   switch (screen.name) {
     case 'pick':
@@ -51,7 +52,21 @@ function Trainer({ chapters, failed }: { chapters: Chapter[]; failed: string[] }
         />
       )
     case 'practice':
-    case 'test':
+    case 'test': {
+      const Round = screen.name === 'practice' ? PracticeScreen : TestScreen
+      return (
+        <Round
+          key={screen.name}
+          cards={cardsForChapters(cards, screen.chapterIds)}
+          allCards={cards}
+          chapterTitles={chapterTitles}
+          progress={progress}
+          update={update}
+          rng={rng}
+          onExit={(goToExam) => (goToExam ? setScreen({ name: 'pick', mode: 'exam' }) : home())}
+        />
+      )
+    }
     case 'exam':
       return (
         <main className="screen">
