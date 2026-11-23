@@ -100,3 +100,22 @@ test('exam: with 30 entries (60 cards) 50 are picked and the hardest card is kep
   expect(picked).toHaveLength(50)
   expect(new Set(picked.map((c) => c.id)).size).toBe(50)
 })
+
+test('exam: cards with wrongTotal > 0 outside the top half are still eligible as easy cards', () => {
+  const cards = makeCards(120)
+  const p = emptyProgress()
+  // 40 entries, both directions wrong, wrongTotal 1..40
+  for (let i = 0; i < 40; i++) {
+    p.cards[`e${i}|fr-nl`] = { inARow: 0, wrongTotal: i + 1 }
+    p.cards[`e${i}|nl-fr`] = { inARow: 0, wrongTotal: i + 1 }
+  }
+  let sawOutsideTop = false
+  for (let seed = 1; seed <= 10; seed++) {
+    const picked = pickExamCards(cards, p, seeded(seed))
+    expect(picked).toHaveLength(50)
+    const entries = new Set(picked.map((c) => c.entryId))
+    for (let i = 15; i < 40; i++) expect(entries.has(`e${i}`)).toBe(true) // top 25
+    if ([...entries].some((e) => Number(e.slice(1)) < 15)) sawOutsideTop = true
+  }
+  expect(sawOutsideTop).toBe(true)
+})

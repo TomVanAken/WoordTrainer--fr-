@@ -40,14 +40,12 @@ export function pickExamCards(cards: Card[], p: Progress, rng: Rng): Card[] {
   const firstIds = new Set(firstPass.map(c => c.id))
 
   const wrong = (c: Card) => p.cards[c.id]?.wrongTotal ?? 0
-  const hardAll = shuffle(candidates.filter(c => wrong(c) > 0), rng).sort((a, b) => wrong(b) - wrong(a))
-  const hard = hardAll.slice(0, Math.floor(n / 2))
+  const hard = shuffle(candidates.filter(c => wrong(c) > 0), rng)
+    .sort((x, y) => wrong(y) - wrong(x))
+    .slice(0, Math.floor(n / 2))
   const hardIds = new Set(hard.map(c => c.id))
-  const easy = shuffle(candidates.filter(c => wrong(c) === 0), rng)
-  let selected = [...hard, ...easy.slice(0, n - hard.length)]
-  if (selected.length < n) {
-    selected = [...selected, ...hardAll.filter(c => !hardIds.has(c.id)).slice(0, n - selected.length)]
-  }
+  const easy = shuffle(candidates.filter(c => !hardIds.has(c.id)), rng)
+  const selected = [...hard, ...easy.slice(0, n - hard.length)]
 
   const partnerSelected = (c: Card) => selected.some(o => o.entryId === c.entryId && o.id !== c.id)
   if (!selected.some(partnerSelected)) return shuffle(selected, rng)
