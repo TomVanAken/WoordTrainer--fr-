@@ -406,7 +406,7 @@ Run: `npm test -- src/progress`. Expected: all passed.
 1. `n = min(EXAM_SIZE, cards.length)`.
 2. Group the cards by entry. In a random order of entries, take one random card per entry as the *first pass*. If the first pass has fewer than `n` cards, the remaining second directions form the *second pass*.
 3. Candidates are the first pass plus as much of the second pass as is needed to reach `n`, taken in random order.
-4. Hard: the candidates with `wrongTotal > 0`, sorted by `wrongTotal` descending with random tie-breaks, up to `floor(n / 2)`. Easy: random from the other candidates to make up `n`. If there aren't enough of those, fill up with the remaining hard ones.
+4. Hard: the candidates with `wrongTotal > 0`, sorted by `wrongTotal` descending with random tie-breaks, up to `floor(n / 2)`. Easy: a random sample of all other candidates (including `wrongTotal > 0` cards outside the hard set) to make up `n`.
 5. Order: if no entry has both directions selected, just shuffle. Otherwise the order is:
    - first-pass cards whose partner is also selected (shuffled),
    - then the other first-pass cards (shuffled),
