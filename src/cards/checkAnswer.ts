@@ -53,7 +53,8 @@ export function matchesForm(
   return t === f
 }
 
-const VOWEL_START = /^[aeiouyàâäéèêëîïôöùûüÿœæ]/i
+// y is a consonant here: no elision before it (le yaourt, le yoga).
+const VOWEL_START = /^[aeiouàâäéèêëîïôöùûüœæ]/i
 
 const UN_UNE = /^\s*(un|une)\s+(\S.*)$/i
 

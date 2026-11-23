@@ -40,9 +40,6 @@ test("noun starting with a vowel: the definite form is l' only", () => {
   expect(checkAnswer('un école', c)).toBe(false)
   expect(checkAnswer('école', c)).toBe(false)
   expect(checkAnswer('une ecole', c)).toBe(false)
-  const y = card('nl-fr', [['un yaourt', false]])
-  expect(checkAnswer("l'yaourt", y, 'm')).toBe(true)
-  expect(checkAnswer('le yaourt', y)).toBe(false)
   const oe = card('nl-fr', [['un œuf', false]])
   expect(checkAnswer("l'oeuf", oe, 'm')).toBe(true)
   expect(checkAnswer("l'œuf", oe, 'm')).toBe(true)
@@ -240,4 +237,16 @@ test("asksGender: NL→FR cards with an un/une answer, once the typed text start
   expect(asksGender(card('nl-fr', [['un(e) élève', false]]), "l'")).toBe(true)
   expect(asksGender(card('nl-fr', [['des vacances', false]]), "l'")).toBe(false)
   expect(asksGender(card('fr-nl', [['een school', false]]), "l'")).toBe(false)
+})
+
+test('y counts as a consonant: le yaourt, never l’yaourt', () => {
+  const y = card('nl-fr', [['un yaourt', false]])
+  expect(checkAnswer('un yaourt', y)).toBe(true)
+  expect(checkAnswer('le yaourt', y)).toBe(true)
+  expect(checkAnswer("l'yaourt", y, 'm')).toBe(false)
+  expect(checkAnswer('la yaourt', y)).toBe(false)
+  const f = card('nl-fr', [['une yourte', false]])
+  expect(checkAnswer('la yourte', f)).toBe(true)
+  expect(checkAnswer("l'yourte", f, 'f')).toBe(false)
+  expect(asksGender(y, "l'y")).toBe(true) // the question is still asked; the answer is just wrong
 })
