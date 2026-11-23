@@ -47,7 +47,7 @@ export function Home({ progress, chapters, cards, onStart, onResumeExam, onSetti
           🃏 Oefenen
         </button>
         <button type="button" className="btn btn-test" onClick={() => onStart('test')}>
-          ⚡ Test
+          ⚡ Toets
         </button>
         <button type="button" className="btn btn-exam" onClick={() => onStart('exam')}>
           🎓 Examen

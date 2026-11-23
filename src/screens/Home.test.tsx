@@ -53,6 +53,6 @@ test('Home disables "Examen hervatten" when the saved exam has cards that are no
 
 test('Home mode buttons start the right mode', async () => {
   const handlers = setup(emptyProgress())
-  await userEvent.click(screen.getByRole('button', { name: /Test/ }))
+  await userEvent.click(screen.getByRole('button', { name: /Toets/ }))
   expect(handlers.onStart).toHaveBeenCalledWith('test')
 })

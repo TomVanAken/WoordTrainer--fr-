@@ -9,7 +9,7 @@ type Props = {
   onBack: () => void
 }
 
-const TITLES: Record<Mode, string> = { practice: 'Oefenen', test: 'Test', exam: 'Examen' }
+const TITLES: Record<Mode, string> = { practice: 'Oefenen', test: 'Toets', exam: 'Examen' }
 
 export function ChapterPicker({ chapters, mode, onConfirm, onBack }: Props) {
   const [selected, setSelected] = useState<Set<string>>(

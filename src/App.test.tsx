@@ -42,7 +42,7 @@ test('App navigates to the picker and back, and resets progress from settings', 
   render(<App />)
   expect(await screen.findByText('42')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByRole('button', { name: /Test/ }))
+  await userEvent.click(screen.getByRole('button', { name: /Toets/ }))
   expect(screen.getByRole('button', { name: 'Starten' })).toBeDisabled()
   await userEvent.click(screen.getByRole('button', { name: /Terug/ }))
 
