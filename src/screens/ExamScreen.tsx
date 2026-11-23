@@ -6,7 +6,7 @@ import type { Gender } from '../types.ts'
 import { pickExamCards } from '../session/select.ts'
 import { answerExam, applyExam, createExam, examFinished, scoreExam, type ExamResult } from '../session/exam.ts'
 import { ExamResultView } from './ExamResultView.tsx'
-import { directionLabel, useCelebrations, type ScreenProps } from './roundCommon.tsx'
+import { PromptText, directionLabel, useCelebrations, type ScreenProps } from './roundCommon.tsx'
 
 type Props = Pick<ScreenProps, 'cards' | 'chapterTitles' | 'progress' | 'update' | 'rng'> & {
   /** null = resume the saved exam */
@@ -93,9 +93,7 @@ export function ExamScreen({ cards, chapterTitles = {}, progress, update, rng, c
       </div>
       <div className="prompt-card">
         <span className="direction">{directionLabel(card)}</span>
-        <p className="prompt" data-testid="prompt">
-          {card.prompt}
-        </p>
+        <PromptText card={card} />
       </div>
       {/* "Weet ik niet" is saved as an empty answer, which scoreExam counts as wrong. */}
       <AnswerInput

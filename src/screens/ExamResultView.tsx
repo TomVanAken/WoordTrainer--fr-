@@ -26,6 +26,7 @@ export function ExamResultView({ result, cardsById, onHome }: Props) {
               return (
                 <li key={`${r.cardId}-${i}`}>
                   <strong>{card?.prompt}</strong>
+                  {card?.hint && <em> ({card.hint})</em>}
                   <br />
                   {r.typed.trim() === '' ? (
                     '(weet ik niet)'

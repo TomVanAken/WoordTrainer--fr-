@@ -1,4 +1,4 @@
-import { articleWarnings, validateChapter, validateChapterList } from './validateChapter.ts'
+import { articleWarnings, missingHintWarnings, validateChapter, validateChapterList } from './validateChapter.ts'
 
 const good = { id: 'ch03', title: 'Hoofdstuk 3', entries: [{ id: 'ch03-001', fr: ['une maison'], nl: ['het huis'] }] }
 
@@ -14,6 +14,7 @@ test.each([
   ['blank form', { ...good, entries: [{ id: 'ch03-001', fr: ['  '], nl: ['y'] }] }],
   ['caps not boolean', { ...good, entries: [{ id: 'ch03-001', fr: ['x'], nl: ['y'], frCaps: 'yes' }] }],
   ['duplicate entry id', { ...good, entries: [good.entries[0], good.entries[0]] }],
+  ['hint not a string', { ...good, entries: [{ id: 'ch03-001', fr: ['x'], nl: ['y'], hint: 3 }] }],
   ['not an object', 'oops'],
 ])('rejects %s', (_, data) => expect(validateChapter(data, 'ch03.json').ok).toBe(false))
 
@@ -29,4 +30,22 @@ test("articleWarnings flags le/la/les/l' forms only", () => {
   expect(articleWarnings(chapterWith(['la maison', "l'école", 'les vacances']))).toHaveLength(3)
   expect(articleWarnings(chapterWith(['une maison', 'à la maison', 'lundi']))).toHaveLength(0)
   expect(articleWarnings(chapterWith(['l’eau']))).toHaveLength(1)
+})
+
+const withHint = (hint: unknown) => ({ ...good, entries: [{ ...good.entries[0], hint }] })
+test('a hint is kept, trimmed; an empty or blank hint means no hint', () => {
+  const r = validateChapter(withHint('  over het weer '), 'ch03.json')
+  expect(r.ok && r.value.entries[0].hint).toBe('over het weer')
+  for (const empty of ['', '   ']) {
+    const e = validateChapter(withHint(empty), 'ch03.json')
+    expect(e).toEqual({ ok: true, value: good })
+  }
+  expect(validateChapter(good, 'ch03.json')).toEqual({ ok: true, value: good })
+})
+test('missingHintWarnings flags only entries without a hint property', () => {
+  const raw = { ...good, entries: [{ id: 'ch03-001', fr: ['x'], nl: ['y'] }, { id: 'ch03-002', fr: ['x'], nl: ['y'], hint: '' }] }
+  const w = missingHintWarnings(raw)
+  expect(w).toHaveLength(1)
+  expect(w[0]).toContain('ch03-001')
+  expect(missingHintWarnings('oops')).toEqual([])
 })

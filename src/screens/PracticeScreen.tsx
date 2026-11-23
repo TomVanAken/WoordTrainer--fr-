@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { answerRound, currentItem } from '../session/round.ts'
 import { recordPractice } from '../progress/rules.ts'
 import { RoundSummary } from './RoundSummary.tsx'
-import { EmptyRound, directionLabel, useRound, type ScreenProps } from './roundCommon.tsx'
+import { EmptyRound, PromptText, directionLabel, useRound, type ScreenProps } from './roundCommon.tsx'
 
 export function PracticeScreen(props: ScreenProps) {
   const { cards, update, onExit } = props
@@ -40,9 +40,7 @@ export function PracticeScreen(props: ScreenProps) {
     <main className="screen">
       <div className="prompt-card">
         <span className="direction">{directionLabel(card)}</span>
-        <p className="prompt" data-testid="prompt">
-          {card.prompt}
-        </p>
+        <PromptText card={card} />
         {revealed && <p className="reveal">{card.display}</p>}
       </div>
       {revealed ? (

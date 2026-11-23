@@ -6,6 +6,7 @@ export interface Entry {
   nl: string[] // accepted Dutch forms
   frCaps?: boolean // true = French answers must match capitals exactly
   nlCaps?: boolean
+  hint?: string // Dutch context shown under the prompt in both directions; never typed
 }
 export interface Chapter {
   id: string
@@ -24,6 +25,7 @@ export interface Card {
   prompt: string // source forms joined with " / "
   answers: Answer[] // accepted target forms (including same-prompt entries, see Task 3)
   display: string // the entry's own target forms joined with " / " (shown as "the correct answer")
+  hint?: string // the entry's Dutch context hint, if any
 }
 export interface CardProgress {
   inARow: number

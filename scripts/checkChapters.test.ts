@@ -14,7 +14,7 @@ function makeDir(files: Record<string, unknown>): string {
 const chapter = (id: string, entryIds: string[], fr = 'une maison') => ({
   id,
   title: 'T',
-  entries: entryIds.map((e) => ({ id: e, fr: [fr], nl: ['het huis'] })),
+  entries: entryIds.map((e) => ({ id: e, fr: [fr], nl: ['het huis'], hint: '' })),
 })
 
 test('reports a listed file that does not exist', () => {
@@ -51,4 +51,11 @@ test('article warnings are warnings, not errors', () => {
   const r = checkChapters(dir)
   expect(r.errors).toEqual([])
   expect(r.warnings).toHaveLength(1)
+})
+test('an entry without a hint property is a warning, not an error', () => {
+  const ch = { id: 'ch01', title: 'T', entries: [{ id: 'ch01-001', fr: ['une maison'], nl: ['het huis'] }] }
+  const r = checkChapters(makeDir({ 'index.json': { chapters: ['ch01.json'] }, 'ch01.json': ch }))
+  expect(r.errors).toEqual([])
+  expect(r.warnings).toHaveLength(1)
+  expect(r.warnings[0]).toContain('hint')
 })

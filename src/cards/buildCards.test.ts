@@ -61,3 +61,43 @@ test('cardsForChapters keeps only the selected chapters', () => {
   expect(sel.every((c) => c.chapterId === 'ch2')).toBe(true)
   expect(cardsForChapters(cards, [])).toEqual([])
 })
+
+const warm: Chapter[] = [
+  {
+    id: 'ch1',
+    title: 'Een',
+    entries: [
+      { id: 'ch1-001', fr: ['Il fait chaud.'], nl: ['Het is warm.'], hint: 'over het weer' },
+      { id: 'ch1-002', fr: ["C'est chaud."], nl: ['Het is warm.'], hint: 'over een gerecht' },
+      { id: 'ch1-003', fr: ['une maison'], nl: ['het huis'], hint: 'gebouw' },
+      { id: 'ch1-004', fr: ['un logement'], nl: ['het huis'], hint: 'gebouw' },
+      { id: 'ch1-005', fr: ['un foyer'], nl: ['het huis'] },
+    ],
+  },
+]
+
+test('the hint is on both cards of its entry', () => {
+  const cards = buildCards(warm)
+  expect(cards.find((c) => c.id === 'ch1-001|fr-nl')!.hint).toBe('over het weer')
+  expect(cards.find((c) => c.id === 'ch1-001|nl-fr')!.hint).toBe('over het weer')
+  expect(cards.find((c) => c.id === 'ch1-005|nl-fr')!.hint).toBeUndefined()
+})
+
+test('the answer must fit the hint: same prompt, different hint is not accepted', () => {
+  const cards = buildCards(warm)
+  const weer = cards.find((c) => c.id === 'ch1-001|nl-fr')!
+  expect(checkAnswer('Il fait chaud', weer)).toBe(true)
+  expect(checkAnswer("C'est chaud", weer)).toBe(false)
+  const gerecht = cards.find((c) => c.id === 'ch1-002|nl-fr')!
+  expect(checkAnswer("C'est chaud", gerecht)).toBe(true)
+  expect(checkAnswer('Il fait chaud', gerecht)).toBe(false)
+})
+
+test('same prompt and same hint still accept each other; no hint only groups with no hint', () => {
+  const cards = buildCards(warm)
+  const huis = cards.find((c) => c.id === 'ch1-003|nl-fr')!
+  expect(checkAnswer('un logement', huis)).toBe(true)
+  expect(checkAnswer('un foyer', huis)).toBe(false)
+  const foyer = cards.find((c) => c.id === 'ch1-005|nl-fr')!
+  expect(checkAnswer('une maison', foyer)).toBe(false)
+})

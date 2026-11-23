@@ -52,9 +52,23 @@ export function validateChapter(data: unknown, fileName: string): Checked<Chapte
       if (typeof v !== 'boolean') return fail(`entry ${id}: ${key} must be a boolean`)
       entry[key] = v
     }
+    if (raw.hint !== undefined) {
+      if (typeof raw.hint !== 'string') return fail(`entry ${id}: hint must be a string`)
+      const hint = raw.hint.trim()
+      if (hint !== '') entry.hint = hint
+    }
     entries.push(entry)
   }
   return { ok: true, value: { id: expectedId, title: data.title, entries } }
+}
+
+/** Every entry in a chapter file should have a "hint" property ("" = no hint). Runs on the raw JSON,
+ *  because the validated Entry no longer shows whether the property was there. */
+export function missingHintWarnings(data: unknown): string[] {
+  if (!isObject(data) || !Array.isArray(data.entries)) return []
+  return data.entries
+    .filter((e): e is Record<string, unknown> => isObject(e) && !('hint' in e))
+    .map((e) => `entry ${String(e.id)}: no "hint" property (use "" for no hint)`)
 }
 
 const ARTICLE = /^(le|la|les) |^l['’]/i

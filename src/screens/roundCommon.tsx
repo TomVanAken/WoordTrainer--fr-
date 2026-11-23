@@ -20,6 +20,22 @@ export type CelebrationItem = { kind: 'badge' | 'record'; label: string }
 
 export const directionLabel = (c: Card) => (c.direction === 'fr-nl' ? 'FR → NL' : 'NL → FR')
 
+/** The word to translate, with its Dutch context hint (if any) underneath, in both directions. */
+export function PromptText({ card }: { card: Card }) {
+  return (
+    <>
+      <p className="prompt" data-testid="prompt">
+        {card.prompt}
+      </p>
+      {card.hint && (
+        <p className="prompt-hint" data-testid="prompt-hint">
+          {card.hint}
+        </p>
+      )}
+    </>
+  )
+}
+
 /** How his un/une choice is shown next to what he typed: (m) mannelijk, (v) vrouwelijk. */
 export const genderLabel = (g: Gender) => (g === 'm' ? 'm' : 'v')
 

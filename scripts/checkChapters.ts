@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { articleWarnings, CHAPTER_ID, ENTRY_ID, validateChapter, validateChapterList } from '../src/data/validateChapter.ts'
+import { articleWarnings, CHAPTER_ID, missingHintWarnings, ENTRY_ID, validateChapter, validateChapterList } from '../src/data/validateChapter.ts'
 
 function readJson(file: string): { ok: true; value: unknown } | { ok: false; error: string } {
   let text: string
@@ -49,6 +49,7 @@ export function checkChapters(dir: string): { errors: string[]; warnings: string
       }
     }
     warnings.push(...articleWarnings(chapter).map((w) => `${fileName}: ${w}`))
+    warnings.push(...missingHintWarnings(raw.value).map((w) => `${fileName}: ${w}`))
   }
   return { errors, warnings }
 }

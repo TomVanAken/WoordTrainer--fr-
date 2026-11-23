@@ -58,6 +58,8 @@ body {
 .prompt-card { background: var(--card); border-radius: 16px; padding: 16px; box-shadow: 0 3px 0 rgba(0,0,0,.08); text-align: center; }
 .direction { display: inline-block; font-size: .85rem; font-weight: 700; background: #e9e2ff; color: var(--ink); border-radius: 999px; padding: 2px 12px; }
 .prompt { font-size: 1.8rem; font-weight: 700; margin: 10px 0 0; overflow-wrap: anywhere; }
+/* Dutch context hint under the prompt; #5a5275 on white is about 7:1 contrast. */
+.prompt-hint { font-size: 1rem; font-style: italic; color: #5a5275; margin: 4px 0 0; overflow-wrap: anywhere; }
 .reveal { font-size: 1.4rem; margin: 10px 0 0; color: #0b6b5a; font-weight: 700; overflow-wrap: anywhere; }
 .statbar { display: flex; justify-content: space-between; font-size: 1rem; }
 .answer-input { width: 100%; min-height: 52px; font: inherit; font-size: 1.1rem; padding: 10px 14px; border: 3px solid var(--purple); border-radius: 14px; background: #fff; color: var(--ink); }

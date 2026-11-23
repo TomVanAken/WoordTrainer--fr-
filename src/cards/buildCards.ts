@@ -30,7 +30,9 @@ export function buildCards(chapters: Chapter[]): Card[] {
       const related: Entry[] = [entry]
       for (const form of entry[source]) {
         for (const other of index[source].get(promptKey(form, source)) ?? []) {
-          if (!related.includes(other)) related.push(other)
+          // Only entries with the same hint (or both none): the answer must fit the hint,
+          // so "Het is warm." with "over het weer" does not accept C'est chaud.
+          if (!related.includes(other) && other.hint === entry.hint) related.push(other)
         }
       }
 
@@ -52,6 +54,7 @@ export function buildCards(chapters: Chapter[]): Card[] {
         prompt: entry[source].join(' / '),
         answers,
         display: entry[target].join(' / '),
+        ...(entry.hint ? { hint: entry.hint } : {}),
       })
     }
   }

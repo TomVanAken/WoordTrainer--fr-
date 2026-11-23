@@ -222,7 +222,9 @@ smartphone).
   is in both a *une maison* entry and a *un logement* entry, either French word is accepted
   for NL→FR "woning". Synonyms the book doesn't list are not accepted, and there is no "I
   was right" button (it would invite cheating). Claude transcribes carefully and adds
-  obvious alternatives.
+  obvious alternatives. **This only applies when the two entries have the same hint** (or
+  neither has one), so the answer must fit the hint: for "Het is warm." with the hint
+  *over het weer* only *Il fait chaud* is correct, not *C'est chaud* (added 2026-11-23).
 - **No offline support.** A web app manifest and icons only, with no service worker, so a
   new chapter shows up as soon as it's published.
 - **Chapter files (see "Chapter files"):** the sample chapter is `ch00`; a chapter that
@@ -274,11 +276,17 @@ can't list a folder anyway).
   the order on screen. Only listed files are loaded. A file in the folder but not in the
   list is ignored, so a chapter can be prepared before it is switched on.
 - **One file per chapter**, for example `ch03.json`:
-  `{ "id": "ch03", "title": "Hoofdstuk 3: À l'école", "entries": [ { "id": "ch03-001", "fr": ["une maison"], "nl": ["het huis", "de woning"] }, ... ] }`.
+  `{ "id": "ch03", "title": "Hoofdstuk 3: À l'école", "entries": [ { "id": "ch03-001", "fr": ["une maison"], "nl": ["het huis", "de woning"], "hint": "" }, ... ] }`.
   An entry has `id`, `fr` (accepted French forms, the first is the main one), `nl`
-  (accepted Dutch forms) and optional `frCaps` / `nlCaps` (true = capitals must match
-  exactly). Placeholders go in parentheses: `s'occuper de (qn)`, `voor (iemand) zorgen`.
-  Optional endings too: `content(e)`.
+  (accepted Dutch forms), `hint` and optional `frCaps` / `nlCaps` (true = capitals must
+  match exactly). Placeholders go in parentheses: `s'occuper de (qn)`, `voor (iemand) zorgen`.
+  Optional endings too: `content(e)`. Parentheses always mean "may be left out", never
+  context.
+- **Hint (added 2026-11-23):** every entry has a `hint`, Dutch context shown in small italics
+  under the word in both directions (and in the exam results list). It is never typed. `""`
+  means no hint, which is most entries. It's used where the meaning depends on context:
+  *Il fait chaud* → "Het is warm." with the hint *over het weer*. `check-chapters` warns
+  about an entry without a `hint` property; the app also loads such an entry, with no hint.
 - **French singular nouns are always written with *un* or *une***, even when the book
   uses *le/la/l'* (`une maison`, `une école`, `un hôtel`). Claude takes the gender from
   the book (or a dictionary when the book only shows *l'*). Plural-only nouns are written

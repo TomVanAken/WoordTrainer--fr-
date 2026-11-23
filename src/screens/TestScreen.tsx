@@ -8,6 +8,7 @@ import { RoundSummary } from './RoundSummary.tsx'
 import type { Gender } from '../types.ts'
 import {
   EmptyRound,
+  PromptText,
   directionLabel,
   genderLabel,
   useCelebrations,
@@ -104,9 +105,7 @@ export function TestScreen(props: ScreenProps) {
       </div>
       <div className="prompt-card">
         <span className="direction">{directionLabel(card)}</span>
-        <p className="prompt" data-testid="prompt">
-          {card.prompt}
-        </p>
+        <PromptText card={card} />
       </div>
       {/* During feedback the input is replaced by the feedback; the words and icon say right or
           wrong, not just the colour. */}
