@@ -356,3 +356,64 @@ test("Test: no un/une choice for FR → NL cards", async () => {
   await userEvent.type(input(), "l'school")
   expect(genderGroup()).not.toBeInTheDocument()
 })
+
+const controleer = () => screen.getByRole('button', { name: 'Controleer' })
+
+test('Test: "Controleer" submits like Enter and keeps the focus on the input when tapped', async () => {
+  setup()
+  expect(fireEvent.mouseDown(controleer())).toBe(false)
+  expect(fireEvent.pointerDown(controleer())).toBe(false)
+  await userEvent.type(input(), correctFor(prompt()))
+  await userEvent.click(controleer())
+  expect(feedback()).toHaveTextContent('✓ Goed! +3')
+  expect(Object.keys(prog().cards)).toHaveLength(1)
+  // hidden during feedback, like the rest of the answer area
+  expect(screen.queryByRole('button', { name: 'Controleer' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Weet ik niet' })).not.toBeInTheDocument()
+})
+
+test('Test: "Controleer" on an empty input does nothing', async () => {
+  setup()
+  const first = prompt()
+  await userEvent.click(controleer())
+  await userEvent.type(input(), '   ')
+  await userEvent.click(controleer())
+  expect(prompt()).toBe(first)
+  expect(screen.queryByTestId('feedback')).not.toBeInTheDocument()
+  expect(prog().cards).toEqual({})
+})
+
+test("Test: \"Controleer\" with an l' answer and no un/une choice shows the hint and records nothing", async () => {
+  setup(ecoleNlFr)
+  await userEvent.type(input(), "l'école")
+  await userEvent.click(controleer())
+  expect(screen.getByText('Kies eerst un of une.')).toBeInTheDocument()
+  expect(screen.queryByTestId('feedback')).not.toBeInTheDocument()
+  expect(prog().cards).toEqual({})
+  await userEvent.click(screen.getByRole('radio', { name: 'Vrouwelijk (une)' }))
+  await userEvent.click(controleer())
+  expect(feedback()).toHaveTextContent('✓ Goed! +3')
+})
+
+test('Test: choosing un/une puts the focus back on the text input (even if the radio took it)', async () => {
+  setup(ecoleNlFr)
+  await userEvent.type(input(), "l'école")
+  const radio = screen.getByRole('radio', { name: 'Vrouwelijk (une)' })
+  // a real browser focuses the radio when its label is tapped; the change must hand the focus back
+  act(() => radio.focus())
+  expect(radio).toHaveFocus()
+  fireEvent.click(radio)
+  expect(radio).toBeChecked()
+  expect(input()).toHaveFocus()
+})
+
+test('Test: Enter on a focused radio with a choice made submits', async () => {
+  setup(ecoleNlFr)
+  await userEvent.type(input(), "l'école")
+  const radio = screen.getByRole('radio', { name: 'Vrouwelijk (une)' })
+  fireEvent.click(radio)
+  act(() => radio.focus())
+  await userEvent.keyboard('{Enter}')
+  expect(feedback()).toHaveTextContent('✓ Goed! +3')
+  expect(Object.keys(prog().cards)).toHaveLength(1)
+})

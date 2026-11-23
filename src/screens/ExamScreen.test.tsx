@@ -201,3 +201,15 @@ test('Exam: an exam saved without genders still resumes', async () => {
   expect(screen.getByText('1 / 2')).toBeInTheDocument()
   expect(screen.getByTestId('wrong-list')).toHaveTextContent('Jij typte: xxx')
 })
+
+test('Exam: "Controleer" submits and moves to the next question; empty does nothing', async () => {
+  setup()
+  const controleer = screen.getByRole('button', { name: 'Controleer' })
+  await userEvent.click(controleer)
+  expect(screen.getByText('Vraag 1 / 6')).toBeInTheDocument()
+  await userEvent.type(input(), correctFor(prompt()))
+  await userEvent.click(screen.getByRole('button', { name: 'Controleer' }))
+  expect(screen.getByText('Vraag 2 / 6')).toBeInTheDocument()
+  expect(prog().exam!.answers).toHaveLength(1)
+  expect(input()).toHaveFocus()
+})

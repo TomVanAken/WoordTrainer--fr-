@@ -57,9 +57,12 @@ export function AnswerInput({ onSubmit, askGender, onDontKnow, questionKey, inpu
     }
   }
 
+  // A browser focuses the radio when it (or its label) is tapped; hand the focus straight back to
+  // the text input in the same event, so Enter works and the phone keyboard stays or comes back.
   const choose = (g: Gender) => {
     setGender(g)
     setHint(false)
+    ref.current?.focus()
   }
 
   const dontKnow = () => {
@@ -91,7 +94,16 @@ export function AnswerInput({ onSubmit, askGender, onDontKnow, questionKey, inpu
         }}
       />
       {showGender && (
-        <fieldset className="gender-choice">
+        <fieldset
+          className="gender-choice"
+          onKeyDown={(e) => {
+            // fallback: Enter while a radio still has the focus submits too
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              submit()
+            }
+          }}
+        >
           <legend>Is het un of une?</legend>
           {/* keepInputFocus: choosing keeps the focus (and the phone keyboard) on the input */}
           <label {...keepInputFocus}>
@@ -109,11 +121,17 @@ export function AnswerInput({ onSubmit, askGender, onDontKnow, questionKey, inpu
           )}
         </fieldset>
       )}
-      {onDontKnow && (
-        <button type="button" className="btn" {...keepInputFocus} onClick={dontKnow}>
-          Weet ik niet
+      <div className="row">
+        {/* Submits exactly like Enter (same guards); tapping it keeps the focus on the input. */}
+        <button type="button" className="btn btn-primary btn-small" {...keepInputFocus} onClick={submit}>
+          Controleer
         </button>
-      )}
+        {onDontKnow && (
+          <button type="button" className="btn btn-small" {...keepInputFocus} onClick={dontKnow}>
+            Weet ik niet
+          </button>
+        )}
+      </div>
     </>
   )
 }
