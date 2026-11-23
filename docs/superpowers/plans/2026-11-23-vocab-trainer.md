@@ -236,9 +236,9 @@ Accents are never stripped.
 
 **`matchesForm(typed, form, lang, caseSensitive)`:**
 1. `t = normalize(typed, caseSensitive)`, `f = normalize(form, caseSensitive)`.
-2. If `caseSensitive` and the first letter of `f` is lower case, lower-case the first letter of `t` (a capital at the start doesn't count).
-3. `nl`: remove a leading `de ` or `het ` (case-insensitive) from both.
-4. `fr`: only if `f` starts with `des ` (case-insensitive), remove a leading `des ` or `les ` from both. Otherwise nothing is removed, so an *un/une* article must be typed exactly.
+2. `nl`: remove a leading `de ` or `het ` (case-insensitive) from both.
+3. `fr`: only if `f` starts with `des ` (case-insensitive), remove a leading `des ` or `les ` from both. Otherwise nothing is removed, so an *un/une* article must be typed exactly.
+4. If `caseSensitive` and the first letter of (the stripped) `f` is lower case, lower-case the first letter of `t` (a capital at the start doesn't count). This comes after the article removal, so `Nederlands` matches a caps-marked `het Nederlands`.
 5. Return `t === f`.
 
 **`checkAnswer`:** false for a blank `typed`. Otherwise true if, for any `answer` in `card.answers` and any variant in `expandOptional(answer.text)`, `matchesForm(typed, variant, L, answer.caseSensitive)`, where `L` is the target language of `card.direction`.
