@@ -319,7 +319,7 @@ Run: `npm test -- src/cards`. Expected: all passed.
     - wrong: `inARow = 0` and `wrongTotal + 1`
     - only when `mode === 'test'`: correct → `currentStreak + 1` and `bestStreak = max(...)`; wrong → `currentStreak = 0`
   - `recordPractice(p: Progress, knewIt: boolean): Progress`: knewIt → `points + 1`; nothing else changes.
-  - `chapterStats(p: Progress, cards: Card[], chapterId: string): { known: number; total: number; percent: number }`: counts only the given (loaded) cards of that chapter; `percent = Math.floor(known / total * 100)`, and 0 when `total` is 0.
+  - `chapterStats(p: Progress, cards: Card[], chapterId: string): { known: number; total: number; percent: number }`: counts only the given (loaded) cards of that chapter; `percent = Math.floor(known * 100 / total)` (integer maths, avoids float error such as 57/100 → 56), and 0 when `total` is 0.
   - `awardBadges(p: Progress, cards: Card[]): { progress: Progress; newBadges: string[] }`: for each chapter present in `cards`, adds it when `known / total > BADGE_THRESHOLD` and it isn't already in `badges`. It never removes a badge.
   - `examResumable(exam: ExamState, cardsById: Map<string, Card>): boolean`: every `cardId` is present.
   - `STORAGE_KEY = 'woordtrainer.progress.v1'`
