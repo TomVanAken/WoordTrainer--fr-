@@ -43,12 +43,12 @@ export function matchesForm(
 ): boolean {
   let t = normalize(typed, caseSensitive)
   let f = normalize(form, caseSensitive)
-  if (caseSensitive && f.length > 0 && f[0] === f[0].toLowerCase() && f[0] !== f[0].toUpperCase()) {
-    t = t.charAt(0).toLowerCase() + t.slice(1)
-  }
   const fOrig = f
   t = stripArticle(t, fOrig, lang)
   f = stripArticle(f, fOrig, lang)
+  if (caseSensitive && f.length > 0 && f[0] === f[0].toLowerCase() && f[0] !== f[0].toUpperCase()) {
+    t = t.charAt(0).toLowerCase() + t.slice(1)
+  }
   return t === f
 }
 

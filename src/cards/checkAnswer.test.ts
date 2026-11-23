@@ -78,6 +78,18 @@ test('capitals required only when marked; a starting capital is fine', () => {
   expect(checkAnswer('Lundi', c)).toBe(true)
 })
 
+test('caps-marked forms with an optional article keep their capital', () => {
+  const nl = card('fr-nl', [['het Nederlands', true]])
+  expect(checkAnswer('Nederlands', nl)).toBe(true)
+  expect(checkAnswer('Het Nederlands', nl)).toBe(true)
+  expect(checkAnswer('het Nederlands', nl)).toBe(true)
+  expect(checkAnswer('nederlands', nl)).toBe(false)
+  const fr = card('nl-fr', [['des Français', true]])
+  expect(checkAnswer('Français', fr)).toBe(true)
+  expect(checkAnswer('les Français', fr)).toBe(true)
+  expect(checkAnswer('français', fr)).toBe(false)
+})
+
 test('keyboard artifacts are accepted', () => {
   expect(checkAnswer('aujourd’hui', card('nl-fr', [["aujourd'hui", false]]))).toBe(true)
   expect(checkAnswer('une soeur', card('nl-fr', [['une sœur', false]]))).toBe(true)
