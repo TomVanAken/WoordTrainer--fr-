@@ -52,6 +52,7 @@ function setup(cards: Card[] = all, initial?: Progress) {
 const prog = () => JSON.parse(screen.getByTestId('progress').textContent!) as Progress
 const prompt = () => screen.getByTestId('prompt').textContent!
 const input = () => screen.getByRole('textbox')
+const feedback = () => screen.getByTestId('feedback')
 const correctFor = (p: string) => all.find((c) => c.prompt === p)!.answers[0].text
 
 afterEach(() => {
@@ -144,7 +145,7 @@ test('Test: beating an existing record shows the record celebration once, then i
     fireEvent.change(input(), { target: { value: text } })
     fireEvent.keyDown(input(), { key: 'Enter' })
   }
-  const enter = () => fireEvent.keyDown(input(), { key: 'Enter' })
+  const enter = () => fireEvent.click(screen.getByRole('button', { name: 'Volgende' }))
   answer(correctFor(prompt()))
   // a streak of 1 only equals the record
   expect(screen.queryByText(/Nieuw record/)).not.toBeInTheDocument()
@@ -194,36 +195,38 @@ test('Test: a badge celebration names the chapter', async () => {
   expect(prog().badges).toEqual(['ch00'])
 })
 
-test('Test: the answer input keeps focus during feedback (the phone keyboard stays open)', async () => {
+test('Test: during feedback the input is gone and the feedback says Goed!/Fout in words', async () => {
   setup()
   await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
-  expect(screen.getByText('Goed! +3')).toBeInTheDocument()
-  expect(input()).toHaveFocus()
-  expect(input()).not.toBeDisabled()
-  expect(input()).toHaveAttribute('readonly')
-  expect(screen.getByRole('button', { name: 'Volgende' })).not.toHaveFocus()
+  expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  expect(feedback()).toHaveAttribute('role', 'status')
+  expect(feedback()).toHaveTextContent('✓ Goed! +3')
+  expect(screen.getByRole('button', { name: 'Volgende' })).toHaveFocus()
+  await userEvent.keyboard('{Enter}')
+  await userEvent.type(input(), 'xxx{Enter}')
+  expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  expect(feedback()).toHaveTextContent(/✗ Fout/)
+  expect(feedback()).toHaveTextContent('Jij typte: xxx')
 })
 
-test('Test: Enter in the input during feedback goes to the next question', async () => {
+test('Test: Enter on Volgende advances exactly once and the input is back and focused', async () => {
   setup()
   const first = prompt()
   await userEvent.type(input(), correctFor(first) + '{Enter}')
   await userEvent.keyboard('{Enter}')
-  expect(prompt()).not.toBe(first)
-  expect(screen.queryByText(/Goed!/)).not.toBeInTheDocument()
+  const second = prompt()
+  expect(second).not.toBe(first)
+  expect(screen.queryByTestId('feedback')).not.toBeInTheDocument()
   expect(input()).toHaveFocus()
-  expect(input()).not.toHaveAttribute('readonly')
   expect(input()).toHaveValue('')
+  expect(Object.keys(prog().cards)).toHaveLength(1)
 })
 
-test('Test: tapping Volgende does not take focus away from the input', async () => {
+test('Test: after clicking Volgende the input is back and focused', async () => {
   setup()
   const first = prompt()
   await userEvent.type(input(), correctFor(first) + '{Enter}')
-  const volgende = screen.getByRole('button', { name: 'Volgende' })
-  expect(fireEvent.mouseDown(volgende)).toBe(false) // default prevented
-  expect(fireEvent.pointerDown(volgende)).toBe(false)
-  await userEvent.click(volgende)
+  await userEvent.click(screen.getByRole('button', { name: 'Volgende' }))
   expect(prompt()).not.toBe(first)
   expect(input()).toHaveFocus()
 })
@@ -247,12 +250,13 @@ test('Test: "Weet ik niet" counts as a wrong answer and the card comes back as a
   const missed = prompt()
   const missedCard = all.find((c) => c.prompt === missed)!
   await userEvent.click(screen.getByRole('button', { name: 'Weet ik niet' }))
-  expect(screen.getByText('Je wist het niet.')).toBeInTheDocument()
+  expect(screen.getByText(/Je wist het niet\./)).toBeInTheDocument()
   expect(screen.getByText(/Juist:/)).toHaveTextContent(`Juist: ${missedCard.display}`)
   expect(screen.queryByText(/Jij typte/)).not.toBeInTheDocument()
-  // not offered during feedback; the input keeps the focus
+  expect(feedback()).toHaveTextContent('✗ Je wist het niet.')
+  // not offered during feedback (the input is gone too)
   expect(screen.queryByRole('button', { name: 'Weet ik niet' })).not.toBeInTheDocument()
-  expect(input()).toHaveFocus()
+  expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
   expect(prog().currentStreak).toBe(0)
   expect(prog().points).toBe(5)
   expect(prog().cards[missedCard.id]).toEqual({ inARow: 0, wrongTotal: 1 })
@@ -267,7 +271,7 @@ test('Test: "Weet ik niet" counts as a wrong answer and the card comes back as a
   // a "Weet ik niet" on the retry only puts the card back in the round
   const before = prog()
   await userEvent.click(screen.getByRole('button', { name: 'Weet ik niet' }))
-  expect(screen.getByText('Je wist het niet.')).toBeInTheDocument()
+  expect(screen.getByText(/Je wist het niet\./)).toBeInTheDocument()
   expect(prog()).toEqual(before)
   await userEvent.keyboard('{Enter}')
   expect(prompt()).toBe(missed) // last card left, so it is asked again right away
@@ -276,13 +280,14 @@ test('Test: "Weet ik niet" counts as a wrong answer and the card comes back as a
   expect(screen.getByText(/2 van de 3/)).toBeInTheDocument()
 })
 
-test('Test: "Weet ik niet" does not take the focus and clears a half-typed answer', async () => {
+test('Test: "Weet ik niet" does not take the focus while typing; the next question starts empty', async () => {
   setup()
   await userEvent.type(input(), 'mai')
   const btn = screen.getByRole('button', { name: 'Weet ik niet' })
   expect(fireEvent.mouseDown(btn)).toBe(false)
   await userEvent.click(btn)
-  expect(input()).toHaveFocus()
+  expect(screen.getByRole('button', { name: 'Volgende' })).toHaveFocus()
   await userEvent.keyboard('{Enter}')
+  expect(input()).toHaveFocus()
   expect(input()).toHaveValue('')
 })
