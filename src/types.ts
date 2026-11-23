@@ -29,9 +29,12 @@ export interface CardProgress {
   inARow: number
   wrongTotal: number
 }
+export type Gender = 'm' | 'f'
 export interface ExamState {
   cardIds: string[]
   answers: string[]
+  /** The un/une choice per answer (null = none asked). Missing in exams saved before it existed. */
+  genders?: (Gender | null)[]
 }
 export interface Progress {
   version: 1

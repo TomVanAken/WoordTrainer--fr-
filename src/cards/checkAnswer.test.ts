@@ -1,5 +1,5 @@
 import type { Card, Direction } from '../types'
-import { checkAnswer, expandOptional, normalize, promptKey } from './checkAnswer'
+import { asksGender, checkAnswer, expandOptional, normalize, promptKey } from './checkAnswer'
 
 function card(direction: Direction, answers: [string, boolean][]): Card {
   return {
@@ -32,31 +32,32 @@ test.each([
 test("noun starting with a vowel: the definite form is l' only", () => {
   const c = card('nl-fr', [['une école', false]])
   expect(checkAnswer('une école', c)).toBe(true)
-  expect(checkAnswer("l'école", c)).toBe(true)
-  expect(checkAnswer('l’école', c)).toBe(true)
+  // an l' answer hides the gender, so it comes with his un/une choice (see below)
+  expect(checkAnswer("l'école", c, 'f')).toBe(true)
+  expect(checkAnswer('l’école', c, 'f')).toBe(true)
   expect(checkAnswer('la école', c)).toBe(false)
   expect(checkAnswer('le école', c)).toBe(false)
   expect(checkAnswer('un école', c)).toBe(false)
   expect(checkAnswer('école', c)).toBe(false)
   expect(checkAnswer('une ecole', c)).toBe(false)
   const y = card('nl-fr', [['un yaourt', false]])
-  expect(checkAnswer("l'yaourt", y)).toBe(true)
+  expect(checkAnswer("l'yaourt", y, 'm')).toBe(true)
   expect(checkAnswer('le yaourt', y)).toBe(false)
   const oe = card('nl-fr', [['un œuf', false]])
-  expect(checkAnswer("l'oeuf", oe)).toBe(true)
-  expect(checkAnswer("l'œuf", oe)).toBe(true)
+  expect(checkAnswer("l'oeuf", oe, 'm')).toBe(true)
+  expect(checkAnswer("l'œuf", oe, 'm')).toBe(true)
   expect(checkAnswer('le oeuf', oe)).toBe(false)
   const acc = card('nl-fr', [['un été', false]])
-  expect(checkAnswer("l'été", acc)).toBe(true)
+  expect(checkAnswer("l'été", acc, 'm')).toBe(true)
   expect(checkAnswer('le été', acc)).toBe(false)
 })
 
 test("noun starting with h: l' and le/la are both accepted", () => {
   const c = card('nl-fr', [['un hôtel', false]])
-  for (const ok of ['un hôtel', "l'hôtel", 'le hôtel']) expect(checkAnswer(ok, c)).toBe(true)
+  for (const ok of ['un hôtel', "l'hôtel", 'le hôtel']) expect(checkAnswer(ok, c, 'm')).toBe(true)
   for (const bad of ['la hôtel', 'une hôtel', 'hôtel']) expect(checkAnswer(bad, c)).toBe(false)
   const f = card('nl-fr', [['une histoire', false]])
-  for (const ok of ['une histoire', "l'histoire", 'la histoire']) expect(checkAnswer(ok, f)).toBe(true)
+  for (const ok of ['une histoire', "l'histoire", 'la histoire']) expect(checkAnswer(ok, f, 'f')).toBe(true)
   expect(checkAnswer('le histoire', f)).toBe(false)
 })
 
@@ -65,7 +66,7 @@ test("consonant: le for un, la for une; l' is wrong", () => {
   expect(checkAnswer('le chat', m)).toBe(true)
   expect(checkAnswer('Le chat.', m)).toBe(true)
   expect(checkAnswer('la chat', m)).toBe(false)
-  expect(checkAnswer("l'chat", m)).toBe(false)
+  expect(checkAnswer("l'chat", m, 'm')).toBe(false)
   expect(checkAnswer('chat', m)).toBe(false)
 })
 
@@ -83,15 +84,15 @@ test('definite article: only for un/une forms; caps and optional parts still wor
   expect(checkAnswer('Le Français', fr)).toBe(true)
   expect(checkAnswer('le français', fr)).toBe(false)
   const am = card('nl-fr', [['un Américain', true]])
-  expect(checkAnswer("l'Américain", am)).toBe(true)
-  expect(checkAnswer("l'américain", am)).toBe(false)
+  expect(checkAnswer("l'Américain", am, 'm')).toBe(true)
+  expect(checkAnswer("l'américain", am, 'm')).toBe(false)
   // optional part
   const clim = card('nl-fr', [['une clim(atisation)', false]])
   for (const ok of ['la clim', 'la climatisation', 'la clim(atisation)']) expect(checkAnswer(ok, clim)).toBe(true)
   expect(checkAnswer('le clim', clim)).toBe(false)
   // un(e) in the data: each gender gets its own definite form
   const el = card('nl-fr', [['un(e) élève', false]])
-  for (const ok of ['un élève', 'une élève', "l'élève"]) expect(checkAnswer(ok, el)).toBe(true)
+  for (const ok of ['un élève', 'une élève', "l'élève"]) expect(checkAnswer(ok, el, 'f')).toBe(true)
   // the Dutch side is untouched
   expect(checkAnswer('de huis', card('fr-nl', [['het huis', false]]))).toBe(true)
 })
@@ -210,4 +211,33 @@ test('repeated closing punctuation is stripped', () => {
   expect(normalize('une maison. .', false)).toBe('une maison')
   expect(normalize('Ça va ? !', false)).toBe('ça va')
   expect(checkAnswer('une maison. .', card('nl-fr', [['une maison', false]]))).toBe(true)
+})
+
+test("an l' answer for an un/une noun needs the right gender", () => {
+  const ecole = card('nl-fr', [['une école', false]])
+  expect(checkAnswer("l'école", ecole, 'f')).toBe(true)
+  expect(checkAnswer("l'école", ecole, 'm')).toBe(false)
+  expect(checkAnswer("l'école", ecole)).toBe(false)
+  expect(checkAnswer('une école', ecole, 'm')).toBe(true) // the gender only matters for l'
+  const hotel = card('nl-fr', [['un hôtel', false]])
+  expect(checkAnswer("l'hôtel", hotel, 'm')).toBe(true)
+  expect(checkAnswer("l'hôtel", hotel, 'f')).toBe(false)
+  expect(checkAnswer('le hôtel', hotel)).toBe(true)
+  const el = card('nl-fr', [['un(e) élève', false]])
+  expect(checkAnswer("l'élève", el, 'm')).toBe(true)
+  expect(checkAnswer("l'élève", el, 'f')).toBe(true)
+  // a form that is itself written with l' is compared as written, as before
+  const verb = card('nl-fr', [["l'emporter", false]])
+  expect(checkAnswer("l'emporter", verb)).toBe(true)
+})
+
+test("asksGender: NL→FR cards with an un/une answer, once the typed text starts with l'", () => {
+  const ecole = card('nl-fr', [['une école', false]])
+  expect(asksGender(ecole, "l'é")).toBe(true)
+  expect(asksGender(ecole, '  L’école')).toBe(true)
+  expect(asksGender(ecole, 'la')).toBe(false)
+  expect(asksGender(ecole, 'l')).toBe(false)
+  expect(asksGender(card('nl-fr', [['un(e) élève', false]]), "l'")).toBe(true)
+  expect(asksGender(card('nl-fr', [['des vacances', false]]), "l'")).toBe(false)
+  expect(asksGender(card('fr-nl', [['een school', false]]), "l'")).toBe(false)
 })

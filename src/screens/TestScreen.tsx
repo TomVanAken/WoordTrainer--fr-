@@ -1,20 +1,22 @@
 import { useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { AnswerInput } from '../components/AnswerInput.tsx'
-import { checkAnswer } from '../cards/checkAnswer.ts'
+import { asksGender, checkAnswer } from '../cards/checkAnswer.ts'
 import { answerRound, currentItem } from '../session/round.ts'
 import { awardBadges, recordTyped } from '../progress/rules.ts'
 import { RoundSummary } from './RoundSummary.tsx'
+import type { Gender } from '../types.ts'
 import {
   EmptyRound,
   directionLabel,
+  genderLabel,
   useCelebrations,
   useRound,
   type CelebrationItem,
   type ScreenProps,
 } from './roundCommon.tsx'
 
-type Feedback = { correct: boolean; typed: string; retry: boolean; dontKnow: boolean }
+type Feedback = { correct: boolean; typed: string; gender?: Gender; retry: boolean; dontKnow: boolean }
 
 export function TestScreen(props: ScreenProps) {
   const { cards, allCards, chapterTitles = {}, progress, update, onExit } = props
@@ -49,10 +51,10 @@ export function TestScreen(props: ScreenProps) {
   const card = cards.find((c) => c.id === current.cardId)!
 
   // "Weet ik niet" (dontKnow) counts exactly like a wrong answer.
-  const answer = (typed: string, dontKnow: boolean) => {
+  const answer = (typed: string, dontKnow: boolean, gender?: Gender) => {
     if (answered.current) return
     answered.current = true
-    const correct = !dontKnow && checkAnswer(typed, card)
+    const correct = !dontKnow && checkAnswer(typed, card, gender)
     if (!current.retry) {
       // update() runs the callback synchronously on the latest progress, so we can read its result.
       let best = progress.bestStreak
@@ -75,7 +77,7 @@ export function TestScreen(props: ScreenProps) {
       }
       celebrations.add(items)
     }
-    setFeedback({ correct, typed, retry: current.retry, dontKnow })
+    setFeedback({ correct, typed, gender, retry: current.retry, dontKnow })
   }
 
   // Render the input again synchronously and focus it inside this click/Enter, so a phone opens
@@ -125,6 +127,7 @@ export function TestScreen(props: ScreenProps) {
               </p>
               <p>
                 Jij typte: <em>{feedback.typed}</em>
+                {feedback.gender && ` (${genderLabel(feedback.gender)})`}
               </p>
             </>
           )}
@@ -141,7 +144,8 @@ export function TestScreen(props: ScreenProps) {
       ) : (
         <AnswerInput
           inputRef={inputRef}
-          onSubmit={(typed) => answer(typed, false)}
+          onSubmit={(typed, gender) => answer(typed, false, gender)}
+          askGender={(typed) => asksGender(card, typed)}
           onDontKnow={() => answer('', true)}
         />
       )}

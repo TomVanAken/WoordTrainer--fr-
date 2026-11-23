@@ -3,7 +3,7 @@ import { Celebration } from '../components/Celebration.tsx'
 import { pickRoundCards } from '../session/select.ts'
 import { createRound } from '../session/round.ts'
 import type { Rng } from '../session/random.ts'
-import type { Card, Progress, RoundState } from '../types.ts'
+import type { Card, Gender, Progress, RoundState } from '../types.ts'
 
 export type ScreenProps = {
   cards: Card[]
@@ -19,6 +19,9 @@ export type ScreenProps = {
 export type CelebrationItem = { kind: 'badge' | 'record'; label: string }
 
 export const directionLabel = (c: Card) => (c.direction === 'fr-nl' ? 'FR → NL' : 'NL → FR')
+
+/** How his un/une choice is shown next to what he typed: (m) mannelijk, (v) vrouwelijk. */
+export const genderLabel = (g: Gender) => (g === 'm' ? 'm' : 'v')
 
 export function useRound({ cards, progress, rng }: Pick<ScreenProps, 'cards' | 'progress' | 'rng'>) {
   const make = () => createRound(pickRoundCards(cards, progress, rng).map((c) => c.id))

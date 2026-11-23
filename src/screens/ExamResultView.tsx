@@ -1,5 +1,6 @@
 import type { ExamResult } from '../session/exam.ts'
 import type { Card } from '../types.ts'
+import { genderLabel } from './roundCommon.tsx'
 
 type Props = { result: ExamResult; cardsById: Map<string, Card>; onHome: () => void }
 
@@ -26,7 +27,14 @@ export function ExamResultView({ result, cardsById, onHome }: Props) {
                 <li key={`${r.cardId}-${i}`}>
                   <strong>{card?.prompt}</strong>
                   <br />
-                  {r.typed.trim() === '' ? '(weet ik niet)' : <>Jij typte: <em>{r.typed}</em></>}
+                  {r.typed.trim() === '' ? (
+                    '(weet ik niet)'
+                  ) : (
+                    <>
+                      Jij typte: <em>{r.typed}</em>
+                      {r.gender && ` (${genderLabel(r.gender)})`}
+                    </>
+                  )}
                   <br />
                   Juist: <strong>{card?.display}</strong>
                 </li>

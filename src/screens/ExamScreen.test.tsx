@@ -7,7 +7,7 @@ import { emptyProgress } from '../progress/rules.ts'
 import { STORAGE_KEY } from '../progress/storage.ts'
 import { useProgress } from '../state/useProgress.ts'
 import { seeded } from '../test/rng.ts'
-import type { Chapter, Progress } from '../types.ts'
+import type { Card, Chapter, Progress } from '../types.ts'
 
 const chapters: Chapter[] = [
   {
@@ -21,15 +21,18 @@ const chapters: Chapter[] = [
   },
 ]
 const all = buildCards(chapters) // 6 cards
+const extra = buildCards([
+  { id: 'ch01', title: 'Hoofdstuk 1', entries: [{ id: 'ch01-001', fr: ['une école'], nl: ['school'] }] },
+])
 
-function Harness({ chapterIds, onExit }: { chapterIds: string[] | null; onExit: () => void }) {
-  const ids = useMemo(() => new Set(all.map((c) => c.id)), [])
+function Harness({ chapterIds, onExit, cards = all }: { chapterIds: string[] | null; onExit: () => void; cards?: Card[] }) {
+  const ids = useMemo(() => new Set(cards.map((c) => c.id)), [cards])
   const { progress, update } = useProgress(ids, true)
   return (
     <>
       <output data-testid="progress">{JSON.stringify(progress)}</output>
       <ExamScreen
-        cards={all}
+        cards={cards}
         chapterTitles={{ ch00: 'Hoofdstuk 0' }}
         progress={progress}
         update={update}
@@ -41,11 +44,11 @@ function Harness({ chapterIds, onExit }: { chapterIds: string[] | null; onExit: 
   )
 }
 
-function setup(chapterIds: string[] | null = ['ch00'], initial?: Progress) {
+function setup(chapterIds: string[] | null = ['ch00'], initial?: Progress, cards: Card[] = all) {
   localStorage.clear()
   if (initial) localStorage.setItem(STORAGE_KEY, JSON.stringify(initial))
   const onExit = vi.fn()
-  const view = render(<Harness chapterIds={chapterIds} onExit={onExit} />)
+  const view = render(<Harness chapterIds={chapterIds} onExit={onExit} cards={cards} />)
   return { onExit, view }
 }
 
@@ -168,4 +171,33 @@ test('Exam: "Weet ik niet" moves on and the result lists the card as "(weet ik n
   expect(list).toHaveTextContent('(weet ik niet)')
   expect(list).toHaveTextContent('Jij typte: xxx')
   expect(screen.getByText('4 / 6')).toBeInTheDocument()
+})
+
+test('Exam stores the un/une choice with the answer and scores it', async () => {
+  const maison = all.find((c) => c.id === 'ch00-001|nl-fr')!
+  const cards = [...all, ...extra]
+  setup(null, { ...emptyProgress(), exam: { cardIds: ['ch01-001|nl-fr', maison.id], answers: [] } }, cards)
+  expect(prompt()).toBe('school')
+  await userEvent.type(input(), "l'école{Enter}")
+  expect(screen.getByText('Kies eerst un of une.')).toBeInTheDocument()
+  expect(screen.getByText('Vraag 1 / 2')).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('radio', { name: 'Vrouwelijk (une)' }))
+  await userEvent.keyboard('{Enter}')
+  expect(screen.getByText('Vraag 2 / 2')).toBeInTheDocument()
+  expect(prog().exam).toEqual({ cardIds: ['ch01-001|nl-fr', maison.id], answers: ["l'école"], genders: ['f'] })
+  // the choice is per question
+  expect(screen.queryByRole('group', { name: 'Is het un of une?' })).not.toBeInTheDocument()
+  await userEvent.type(input(), "l'maison")
+  await userEvent.click(screen.getByRole('radio', { name: 'Vrouwelijk (une)' }))
+  await userEvent.keyboard('{Enter}')
+  expect(screen.getByText('1 / 2')).toBeInTheDocument()
+  expect(screen.getByTestId('wrong-list')).toHaveTextContent("Jij typte: l'maison (v)")
+})
+
+test('Exam: an exam saved without genders still resumes', async () => {
+  setup(null, examWith(2, ['xxx']))
+  expect(screen.getByText('Vraag 2 / 2')).toBeInTheDocument()
+  await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  expect(screen.getByText('1 / 2')).toBeInTheDocument()
+  expect(screen.getByTestId('wrong-list')).toHaveTextContent('Jij typte: xxx')
 })

@@ -1,4 +1,4 @@
-import type { Card } from '../types'
+import type { Card, ExamState } from '../types'
 import { emptyProgress, isKnown } from '../progress/rules'
 import { answerExam, applyExam, createExam, examFinished, scoreExam } from './exam'
 
@@ -59,4 +59,32 @@ test('applyExam awards a badge once the chapter crosses 85%', () => {
   const again = applyExam(first.progress, r, cards)
   expect(again.newBadges).toEqual([])
   expect(again.progress.badges).toEqual(['c'])
+})
+
+test('answerExam stores the gender with each answer and scoreExam uses it', () => {
+  const ecole: Card = {
+    id: 'e|nl-fr', entryId: 'e', chapterId: 'c', direction: 'nl-fr',
+    prompt: 'school', answers: [{ text: 'une école', caseSensitive: false }], display: 'une école',
+  }
+  const ok = card('c', 1)
+  let s = createExam([ecole.id, ok.id, ecole.id])
+  s = answerExam(s, "l'école", 'f')
+  s = answerExam(s, 'ok')
+  s = answerExam(s, "l'école", 'm')
+  expect(s.answers).toEqual(["l'école", 'ok', "l'école"])
+  expect(s.genders).toEqual(['f', null, 'm'])
+  const r = scoreExam(s, byId([ecole, ok]))
+  expect(r.results.map((x) => x.correct)).toEqual([true, true, false])
+  expect(r.results[0].gender).toBe('f')
+  expect(r.results[2].gender).toBe('m')
+})
+
+test('an exam saved before genders existed still continues and scores', () => {
+  const cards = many('c', 3)
+  let s: ExamState = { cardIds: cards.map((c) => c.id), answers: ['ok'] } // no genders
+  s = answerExam(s, 'ok')
+  s = answerExam(s, 'nope')
+  expect(s.genders).toEqual([null, null, null])
+  expect(scoreExam(s, byId(cards)).correct).toBe(2)
+  expect(scoreExam({ cardIds: cards.map((c) => c.id), answers: ['ok', 'ok', 'ok'] }, byId(cards)).correct).toBe(3)
 })

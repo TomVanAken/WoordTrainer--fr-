@@ -1,8 +1,12 @@
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useEffect, useId, useRef, useState, type RefObject } from 'react'
+import type { Gender } from '../types.ts'
 import { keepInputFocus } from './keepInputFocus.ts'
 
 type Props = {
-  onSubmit: (text: string) => void
+  /** `gender` is passed only when the un/une question was asked. */
+  onSubmit: (text: string, gender?: Gender) => void
+  /** Whether this typed text needs an un/une choice before it can be submitted (an l' answer). */
+  askGender?: (typed: string) => boolean
   /** Shows a "Weet ik niet" button while the question is waiting for an answer (never on Enter). */
   onDontKnow?: () => void
   /** When this changes, the input is cleared and refocused (a new question without a feedback state). */
@@ -11,8 +15,12 @@ type Props = {
   inputRef?: RefObject<HTMLInputElement | null>
 }
 
-export function AnswerInput({ onSubmit, onDontKnow, questionKey, inputRef }: Props) {
+export function AnswerInput({ onSubmit, askGender, onDontKnow, questionKey, inputRef }: Props) {
   const [value, setValue] = useState('')
+  const [gender, setGender] = useState<Gender | null>(null)
+  const [hint, setHint] = useState(false)
+  const radioName = useId()
+  const showGender = askGender?.(value) ?? false
   const ownRef = useRef<HTMLInputElement>(null)
   const ref = inputRef ?? ownRef
   // Set by a submit until a new question starts (a new questionKey or a fresh mount), so a fast
@@ -23,14 +31,35 @@ export function AnswerInput({ onSubmit, onDontKnow, questionKey, inputRef }: Pro
   useEffect(() => {
     pending.current = false
     setValue('')
+    setGender(null)
+    setHint(false)
     ref.current?.focus()
   }, [questionKey, ref])
 
   const submit = () => {
     if (pending.current || value.trim() === '') return
+    if (showGender && gender === null) {
+      setHint(true) // he has to pick un or une first
+      return
+    }
     pending.current = true
-    onSubmit(value)
+    onSubmit(value, showGender ? gender! : undefined)
     setValue('')
+    setGender(null)
+    setHint(false)
+  }
+
+  const change = (text: string) => {
+    setValue(text)
+    if (!askGender?.(text)) {
+      setGender(null)
+      setHint(false)
+    }
+  }
+
+  const choose = (g: Gender) => {
+    setGender(g)
+    setHint(false)
   }
 
   const dontKnow = () => {
@@ -53,7 +82,7 @@ export function AnswerInput({ onSubmit, onDontKnow, questionKey, inputRef }: Pro
         autoCapitalize="off"
         spellCheck={false}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => change(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             e.preventDefault()
@@ -61,6 +90,25 @@ export function AnswerInput({ onSubmit, onDontKnow, questionKey, inputRef }: Pro
           }
         }}
       />
+      {showGender && (
+        <fieldset className="gender-choice">
+          <legend>Is het un of une?</legend>
+          {/* keepInputFocus: choosing keeps the focus (and the phone keyboard) on the input */}
+          <label {...keepInputFocus}>
+            <input type="radio" name={radioName} checked={gender === 'm'} onChange={() => choose('m')} />
+            {' Mannelijk (un)'}
+          </label>
+          <label {...keepInputFocus}>
+            <input type="radio" name={radioName} checked={gender === 'f'} onChange={() => choose('f')} />
+            {' Vrouwelijk (une)'}
+          </label>
+          {hint && (
+            <p className="gender-hint" role="alert">
+              Kies eerst un of une.
+            </p>
+          )}
+        </fieldset>
+      )}
       {onDontKnow && (
         <button type="button" className="btn" {...keepInputFocus} onClick={dontKnow}>
           Weet ik niet

@@ -291,3 +291,68 @@ test('Test: "Weet ik niet" does not take the focus while typing; the next questi
   expect(input()).toHaveFocus()
   expect(input()).toHaveValue('')
 })
+
+const extra = buildCards([
+  {
+    id: 'ch01',
+    title: 'Hoofdstuk 1',
+    entries: [
+      { id: 'ch01-001', fr: ['une école'], nl: ['school'] },
+      { id: 'ch01-002', fr: ['un hôtel'], nl: ['hotel'] },
+    ],
+  },
+])
+const ecoleNlFr = extra.filter((c) => c.id === 'ch01-001|nl-fr')
+const genderGroup = () => screen.queryByRole('group', { name: 'Is het un of une?' })
+
+test("Test: the un/une choice appears only once the answer starts with l'", async () => {
+  setup(ecoleNlFr)
+  expect(prompt()).toBe('school')
+  await userEvent.type(input(), 'la')
+  expect(genderGroup()).not.toBeInTheDocument()
+  await userEvent.clear(input())
+  await userEvent.type(input(), 'l’éc')
+  expect(genderGroup()).toBeInTheDocument()
+  expect(screen.getByRole('radio', { name: 'Mannelijk (un)' })).not.toBeChecked()
+  expect(screen.getByRole('radio', { name: 'Vrouwelijk (une)' })).not.toBeChecked()
+  // editing it away from l' hides the group again
+  await userEvent.clear(input())
+  await userEvent.type(input(), 'une éc')
+  expect(genderGroup()).not.toBeInTheDocument()
+})
+
+test('Test: without a choice Enter does nothing and a hint shows', async () => {
+  setup(ecoleNlFr)
+  await userEvent.type(input(), "l'école{Enter}")
+  expect(screen.queryByTestId('feedback')).not.toBeInTheDocument()
+  expect(screen.getByText('Kies eerst un of une.')).toBeInTheDocument()
+  expect(prog().cards).toEqual({})
+  // "Weet ik niet" is the other way on
+  await userEvent.click(screen.getByRole('button', { name: 'Weet ik niet' }))
+  expect(feedback()).toHaveTextContent('Je wist het niet.')
+  expect(prog().cards['ch01-001|nl-fr']).toEqual({ inARow: 0, wrongTotal: 1 })
+})
+
+test("Test: l'école with vrouwelijk is correct, with mannelijk wrong and shown with (m)", async () => {
+  setup(ecoleNlFr)
+  await userEvent.type(input(), "l'école")
+  await userEvent.click(screen.getByRole('radio', { name: 'Mannelijk (un)' }))
+  await userEvent.type(input(), '{Enter}')
+  expect(feedback()).toHaveTextContent('✗ Fout')
+  expect(feedback()).toHaveTextContent("Jij typte: l'école (m)")
+  expect(feedback()).toHaveTextContent('Juist: une école')
+  await userEvent.keyboard('{Enter}')
+  // the retry: now with vrouwelijk
+  expect(genderGroup()).not.toBeInTheDocument()
+  await userEvent.type(input(), "l'école")
+  await userEvent.click(screen.getByRole('radio', { name: 'Vrouwelijk (une)' }))
+  expect(input()).toHaveFocus() // tapping the choice keeps the keyboard up
+  await userEvent.keyboard('{Enter}')
+  expect(feedback()).toHaveTextContent('✓ Goed!')
+})
+
+test("Test: no un/une choice for FR → NL cards", async () => {
+  setup(extra.filter((c) => c.id === 'ch01-001|fr-nl'))
+  await userEvent.type(input(), "l'school")
+  expect(genderGroup()).not.toBeInTheDocument()
+})

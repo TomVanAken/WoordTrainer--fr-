@@ -1,4 +1,4 @@
-import type { Card, ExamState, Progress } from '../types'
+import type { Card, ExamState, Gender, Progress } from '../types'
 import { awardBadges, recordTyped } from '../progress/rules'
 import { checkAnswer } from '../cards/checkAnswer'
 
@@ -6,9 +6,10 @@ export function createExam(cardIds: string[]): ExamState {
   return { cardIds, answers: [] }
 }
 
-export function answerExam(s: ExamState, typed: string): ExamState {
+export function answerExam(s: ExamState, typed: string, gender: Gender | null = null): ExamState {
   if (examFinished(s)) return s
-  return { ...s, answers: [...s.answers, typed] }
+  const genders = s.genders ?? s.answers.map(() => null) // an exam saved before genders existed
+  return { ...s, answers: [...s.answers, typed], genders: [...genders, gender] }
 }
 
 export function examFinished(s: ExamState): boolean {
@@ -19,14 +20,15 @@ export interface ExamResult {
   correct: number
   total: number
   percent: number
-  results: { cardId: string; typed: string; correct: boolean }[]
+  results: { cardId: string; typed: string; gender?: Gender; correct: boolean }[]
 }
 
 export function scoreExam(s: ExamState, cardsById: Map<string, Card>): ExamResult {
   const results = s.cardIds.map((cardId, i) => {
     const typed = s.answers[i] ?? ''
+    const gender = s.genders?.[i] ?? undefined
     const card = cardsById.get(cardId)
-    return { cardId, typed, correct: card ? checkAnswer(typed, card) : false }
+    return { cardId, typed, gender, correct: card ? checkAnswer(typed, card, gender) : false }
   })
   const correct = results.filter(r => r.correct).length
   const total = results.length

@@ -64,3 +64,13 @@ test('localStorage throwing gives empty progress and save does not throw', () =>
   expect(() => saveProgress(sample())).not.toThrow()
   expect(() => clearProgress()).not.toThrow()
 })
+
+test('a saved exam with or without genders loads; a broken genders field does not', () => {
+  const withGenders = { ...sample(), exam: { cardIds: ['a|fr-nl', 'b|fr-nl'], answers: ["l'x"], genders: ['f' as const] } }
+  saveProgress(withGenders)
+  expect(loadProgress(new Set(['a|fr-nl', 'b|fr-nl']), true)).toEqual(withGenders)
+  saveProgress(sample()) // an exam saved before genders existed
+  expect(loadProgress(new Set(['a|fr-nl', 'b|fr-nl']), true).exam).toEqual(sample().exam)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...sample(), exam: { cardIds: [], answers: [], genders: 'f' } }))
+  expect(loadProgress(new Set(), true)).toEqual(emptyProgress())
+})

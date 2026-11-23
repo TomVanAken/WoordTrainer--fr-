@@ -13,6 +13,8 @@ function validShape(v: unknown): v is Progress {
   if (!Array.isArray(v.badges) || !isObject(v.cards)) return false
   if (v.exam !== null) {
     if (!isObject(v.exam) || !Array.isArray(v.exam.cardIds) || !Array.isArray(v.exam.answers)) return false
+    // genders is optional: exams saved before it existed have none
+    if (v.exam.genders !== undefined && !Array.isArray(v.exam.genders)) return false
   }
   return true
 }

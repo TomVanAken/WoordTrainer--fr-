@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnswerInput } from '../components/AnswerInput.tsx'
 import { cardsForChapters } from '../cards/buildCards.ts'
+import { asksGender } from '../cards/checkAnswer.ts'
+import type { Gender } from '../types.ts'
 import { pickExamCards } from '../session/select.ts'
 import { answerExam, applyExam, createExam, examFinished, scoreExam, type ExamResult } from '../session/exam.ts'
 import { ExamResultView } from './ExamResultView.tsx'
@@ -76,9 +78,9 @@ export function ExamScreen({ cards, chapterTitles = {}, progress, update, rng, c
   const index = exam.answers.length
   const card = cardsById.get(exam.cardIds[index])!
 
-  const submit = (typed: string) => {
-    update((p) => ({ ...p, exam: answerExam(p.exam!, typed) }))
-    const next = answerExam(exam, typed)
+  const submit = (typed: string, gender: Gender | null = null) => {
+    update((p) => ({ ...p, exam: answerExam(p.exam!, typed, gender) }))
+    const next = answerExam(exam, typed, gender)
     if (examFinished(next)) finish(next)
   }
 
@@ -96,7 +98,12 @@ export function ExamScreen({ cards, chapterTitles = {}, progress, update, rng, c
         </p>
       </div>
       {/* "Weet ik niet" is saved as an empty answer, which scoreExam counts as wrong. */}
-      <AnswerInput onSubmit={submit} onDontKnow={() => submit('')} questionKey={index} />
+      <AnswerInput
+        onSubmit={(typed, gender) => submit(typed, gender ?? null)}
+        askGender={(typed) => asksGender(card, typed)}
+        onDontKnow={() => submit('')}
+        questionKey={index}
+      />
       <button type="button" className="btn btn-link" onClick={onExit}>
         Stoppen (je kunt later verder)
       </button>
