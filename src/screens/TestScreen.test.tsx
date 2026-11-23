@@ -70,11 +70,11 @@ test('Test: correct answer shows "Goed! +3", adds 3 points and raises the streak
   expect(screen.getByTestId('round-points')).toHaveTextContent('3')
 })
 
-test('Test: "la maison" for "une maison" is wrong and shows "Juist: une maison"', async () => {
+test('Test: "le maison" for "une maison" is wrong and shows "Juist: une maison"', async () => {
   setup(all.filter((c) => c.display === 'une maison'))
   expect(prompt()).toBe('huis')
-  await userEvent.type(input(), 'la maison{Enter}')
-  expect(screen.getByText(/Jij typte:/)).toHaveTextContent('Jij typte: la maison')
+  await userEvent.type(input(), 'le maison{Enter}')
+  expect(screen.getByText(/Jij typte:/)).toHaveTextContent('Jij typte: le maison')
   expect(screen.getByText(/Juist:/)).toHaveTextContent('Juist: une maison')
   expect(prog().points).toBe(0)
 })

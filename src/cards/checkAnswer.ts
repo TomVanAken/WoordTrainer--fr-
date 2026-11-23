@@ -53,6 +53,25 @@ export function matchesForm(
   return t === f
 }
 
+const VOWEL_START = /^[aeiouyàâäéèêëîïôöùûüÿœæ]/i
+
+/**
+ * A stored singular noun is written with un/une; the matching definite article is accepted too.
+ * Elision follows the noun's first letter: a vowel (or œ) takes only l', an h takes l' as well as
+ * le/la (aspirated h is not in the data), anything else takes le (un) or la (une).
+ * Other forms (des-forms, phrases, verbs...) are returned unchanged.
+ */
+export function frenchArticleForms(form: string): string[] {
+  const m = /^\s*(un|une)\s+(\S.*)$/i.exec(form)
+  if (!m) return [form]
+  const noun = m[2]
+  const definite = m[1].toLowerCase() === 'un' ? 'le' : 'la'
+  const forms = [form]
+  if (VOWEL_START.test(noun) || /^h/i.test(noun)) forms.push(`l'${noun}`)
+  if (!VOWEL_START.test(noun)) forms.push(`${definite} ${noun}`)
+  return forms
+}
+
 /**
  * Typed text may itself use the book's "(...)" notation (être fatigué(e)): it is correct when
  * EVERY form it stands for is an accepted form, so une clim(e) for une clim(atisation) is wrong
@@ -63,10 +82,10 @@ export function checkAnswer(typed: string, card: Card): boolean {
   const lang: Lang = card.direction === 'fr-nl' ? 'nl' : 'fr'
   const typedVariants = expandOptional(typed)
   if (typedVariants.some((t) => t === '')) return false
+  const forms = (text: string) =>
+    expandOptional(text).flatMap((variant) => (lang === 'fr' ? frenchArticleForms(variant) : [variant]))
   return typedVariants.every((t) =>
-    card.answers.some((a) =>
-      expandOptional(a.text).some((variant) => matchesForm(t, variant, lang, a.caseSensitive)),
-    ),
+    card.answers.some((a) => forms(a.text).some((form) => matchesForm(t, form, lang, a.caseSensitive))),
   )
 }
 
