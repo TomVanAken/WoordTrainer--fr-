@@ -24,13 +24,14 @@ export function normalize(text: string, caseSensitive: boolean): string {
   s = s.replace(/[’‘ʼ]/g, "'").replace(/[“”]/g, '"')
   s = s.replace(/œ/g, 'oe').replace(/Œ/g, 'Oe').replace(/æ/g, 'ae').replace(/Æ/g, 'Ae')
   s = s.replace(/\s+/g, ' ').trim()
-  s = s.replace(/[.!?]+$/, '').trim()
+  s = s.replace(/[\s.!?]+$/, '')
   return caseSensitive ? s : s.toLowerCase()
 }
 
-/** Article removal shared by matchesForm and promptKey (steps 3-4). `f` decides the French rule. */
+/** Article removal shared by matchesForm and promptKey (steps 3-4). `f` decides the French rule.
+ *  Dutch de/het/een are all optional (een Fransman = Fransman). */
 function stripArticle(s: string, f: string, lang: Lang): string {
-  if (lang === 'nl') return s.replace(/^(de|het) /i, '')
+  if (lang === 'nl') return s.replace(/^(de|het|een) /i, '')
   if (/^des /i.test(f)) return s.replace(/^(des|les) /i, '')
   return s
 }
@@ -52,11 +53,20 @@ export function matchesForm(
   return t === f
 }
 
+/**
+ * Typed text may itself use the book's "(...)" notation (être fatigué(e)): it is correct when
+ * EVERY form it stands for is an accepted form, so une clim(e) for une clim(atisation) is wrong
+ * (une clime is not a form) and a hedge like (une) maison for une maison is wrong too.
+ */
 export function checkAnswer(typed: string, card: Card): boolean {
   if (typed.trim() === '') return false
   const lang: Lang = card.direction === 'fr-nl' ? 'nl' : 'fr'
-  return card.answers.some((a) =>
-    expandOptional(a.text).some((variant) => matchesForm(typed, variant, lang, a.caseSensitive)),
+  const typedVariants = expandOptional(typed)
+  if (typedVariants.some((t) => t === '')) return false
+  return typedVariants.every((t) =>
+    card.answers.some((a) =>
+      expandOptional(a.text).some((variant) => matchesForm(t, variant, lang, a.caseSensitive)),
+    ),
   )
 }
 

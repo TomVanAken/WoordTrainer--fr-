@@ -123,3 +123,30 @@ test('promptKey drops Dutch de/het and French des/les only for des-forms', () =>
   expect(promptKey('des vacances', 'fr')).toBe('vacances')
   expect(promptKey('une maison', 'fr')).toBe('une maison')
 })
+
+test('typing the optional part with its brackets, as the book shows it, is accepted', () => {
+  const tired = card('nl-fr', [['être fatigué(e)', false]])
+  for (const ok of ['être fatigué(e)', 'être fatigué', 'être fatiguée']) expect(checkAnswer(ok, tired)).toBe(true)
+  expect(checkAnswer('fatigué(e)', card('nl-fr', [['fatigué(e)', false]]))).toBe(true)
+  const clim = card('nl-fr', [['une clim(atisation)', false]])
+  expect(checkAnswer('une clim(atisation)', clim)).toBe(true)
+  expect(checkAnswer('une clim(e)', clim)).toBe(false)
+  const occ = card('nl-fr', [["s'occuper de (qn)", false]])
+  expect(checkAnswer("s'occuper de (qn)", occ)).toBe(true)
+  expect(checkAnswer('()', card('nl-fr', [['une maison', false]]))).toBe(false)
+})
+
+test('Dutch "een" is an optional article like de/het', () => {
+  const c = card('fr-nl', [['een Fransman', true]])
+  expect(checkAnswer('Fransman', c)).toBe(true)
+  expect(checkAnswer('een Fransman', c)).toBe(true)
+  expect(checkAnswer('Een Fransman', c)).toBe(true)
+  expect(checkAnswer('fransman', c)).toBe(false)
+  expect(promptKey('een Fransman', 'nl')).toBe('fransman')
+})
+
+test('repeated closing punctuation is stripped', () => {
+  expect(normalize('une maison. .', false)).toBe('une maison')
+  expect(normalize('Ça va ? !', false)).toBe('ça va')
+  expect(checkAnswer('une maison. .', card('nl-fr', [['une maison', false]]))).toBe(true)
+})
