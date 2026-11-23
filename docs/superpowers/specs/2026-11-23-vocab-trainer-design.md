@@ -104,10 +104,14 @@ smartphone).
 - Shows the word, he types the translation.
 - Correct = **3 points**.
 - Immediate feedback. When he's wrong, the app shows the correct answer next to what he
-  typed.
+  typed. While the feedback shows, the answer field is hidden, and right/wrong is shown
+  with an icon and a word (✓ Goed! / ✗ Fout), not by colour alone (parent's decision).
 - **Known cards are skipped.**
 - Missed cards come back later in the same round.
 - If every card in his selection is already known, the app says so and suggests Exam.
+- A **"Weet ik niet"** button (added by the parent): counts as a wrong answer (streak resets,
+  no points, the card comes back later) and shows the correct answer, so he doesn't have
+  to type junk to move on.
 
 ### Exam mode (typed, review before a school test)
 
@@ -122,6 +126,8 @@ smartphone).
   the cards he got wrong with the correct answers.
 - Results update progress: a wrong answer means that card is no longer known (so it
   comes back in Practice and Test), and a correct answer counts toward known.
+- A **"Weet ik niet"** button skips to the next question; it counts as a wrong answer and
+  shows as "(weet ik niet)" in the list at the end.
 - Correct = 3 points. **Exam answers do not count for the streak** (decided by the parent: known cards would make it too easy to build a record).
 - An exam in progress is saved. If the tab closes, it picks up where it left off.
 
@@ -137,15 +143,20 @@ smartphone).
     Days and months are lower case (*maandag*, *januari*).
   - The same entry can need a capital in one direction only: *français* (no capital)
     vs *Frans* (capital required).
-- **The Dutch article (de/het) is optional and not checked.** *huis* and *het huis* are
-  both correct.
-- **The French article is mandatory for singular nouns, and it is always *un* or *une***
-  (decided by the parent). The indefinite article always shows the gender, so there is
-  no *l'* problem (*l'école* hides it, *une école* doesn't).
-  - *une maison* is correct. *maison*, *un maison* and *la maison* are wrong (*la maison*
-    too, even though the gender is right: parent's decision, one fixed form). When he gets
-    it wrong, the feedback shows *une maison*, so he learns the convention.
-  - *une école* is correct; *l'école* and *école* are wrong.
+- **The Dutch article (de/het/een) is optional and not checked.** *huis* and *het huis*
+  are both correct; so are *Fransman* and *een Fransman*.
+- **The French article is mandatory for singular nouns, and it must have the right
+  gender** (decided by the parent, changed 2026-11-23). Both the indefinite (*un/une*)
+  and the definite (*le/la/l'*) article are accepted.
+  - *une maison* and *la maison* are correct. *maison*, *un maison* and *le maison* are
+    wrong. The feedback always shows the *un/une* form (*une maison*).
+  - Before a vowel the definite article is *l'*: *une école* and *l'école* are correct,
+    *la école* is wrong. Before *h* both *l'* and *le/la* are accepted (the data doesn't
+    know which *h* is aspirated).
+  - **Gender choice for *l'*:** *l'* hides the gender, so as soon as his answer starts
+    with *l'* the app shows a required choice "Mannelijk (un)" / "Vrouwelijk (une)". He
+    can't continue until he picks one, or taps "Weet ik niet". *l'école* + vrouwelijk is
+    correct; *l'école* + mannelijk is wrong. This applies in Test and Exam.
   - Plural-only nouns are written with *des* (*des vacances*). Plural has no gender, so
     the article is optional there: *vacances*, *des vacances* and *les vacances* are all
     correct.
@@ -229,9 +240,12 @@ mark a wrong or missing article as wrong. The options were:
    accepted, so gender is never tested.
 2. **Optional, but must be right if typed.** Briefly chosen, then rejected: he can skip
    the article and so skip learning the gender, and *l'* nouns can't be checked.
-3. **Mandatory for singular nouns, always *un/une* (chosen by the parent).** Gender is
-   tested on every noun, and *un/une* shows the gender even where *le/la* would elide
-   to *l'*.
+3. **Mandatory for singular nouns, always *un/une*.** Chosen first, then replaced: *la
+   maison* (right gender) was marked wrong.
+4. **Mandatory for singular nouns, *un/une* or *le/la/l'* with the right gender, plus a
+   required un/une choice when he types *l'* (chosen by the parent, 2026-11-23).** Gender
+   is tested on every noun, and the natural *l'école* is accepted without hiding the
+   gender.
 
 ## Chapter files (loaded at runtime, added 2026-11-23)
 
@@ -269,8 +283,9 @@ can't list a folder anyway).
   uses *le/la/l'* (`une maison`, `une école`, `un hôtel`). Claude takes the gender from
   the book (or a dictionary when the book only shows *l'*). Plural-only nouns are written
   with *des* (`des vacances`). The app treats a form starting with *un/une* as a noun
-  whose article is required, and a form starting with *des* as one whose article is
-  optional.
+  whose article is required (*un/une* or the matching *le/la/l'*), and a form starting
+  with *des* as one whose article is optional. The stored *un/une* is also what tells
+  the app the gender of an *l'* noun.
 - `npm run check-chapters` warns about French forms that start with *le, la, l'* or
   *les*, so a noun copied from the book without converting its article is caught before
   commit. It is a warning, not a failure, because some phrases really start that way
