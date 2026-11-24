@@ -311,7 +311,7 @@ Run: `npm test -- src/cards`. Expected: all passed.
 **Interfaces:**
 - Consumes: `Card`, `Progress`, `CardProgress`, `ExamState` (Task 2).
 - Produces (all pure; they return new objects and never mutate):
-  - `KNOWN_AFTER = 3`, `BADGE_THRESHOLD = 0.85`
+  - `KNOWN_AFTER = 2`, `BADGE_THRESHOLD = 0.85`
   - `emptyProgress(): Progress`
   - `isKnown(p: Progress, cardId: string): boolean`
   - `recordTyped(p: Progress, cardId: string, correct: boolean, mode: 'test' | 'exam'): Progress`
@@ -333,11 +333,11 @@ Run: `npm test -- src/cards`. Expected: all passed.
 
 ```ts
 // rules.test.ts
-test('known only after 3 correct typed answers in a row', () => {
+test('known only after 2 correct typed answers in a row', () => {
   let p = emptyProgress()
-  p = recordTyped(p, 'a|fr-nl', true, 'test'); p = recordTyped(p, 'a|fr-nl', true, 'exam')
+  p = recordTyped(p, 'a|fr-nl', true, 'test')
   expect(isKnown(p, 'a|fr-nl')).toBe(false)
-  p = recordTyped(p, 'a|fr-nl', true, 'test'); expect(isKnown(p, 'a|fr-nl')).toBe(true)
+  p = recordTyped(p, 'a|fr-nl', true, 'exam'); expect(isKnown(p, 'a|fr-nl')).toBe(true)
   p = recordTyped(p, 'a|fr-nl', false, 'exam'); expect(isKnown(p, 'a|fr-nl')).toBe(false)
   expect(p.cards['a|fr-nl'].wrongTotal).toBe(1)
 })

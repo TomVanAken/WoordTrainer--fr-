@@ -1,6 +1,6 @@
 import type { Card, ExamState, Progress } from '../types'
 
-export const KNOWN_AFTER = 3
+export const KNOWN_AFTER = 2
 export const BADGE_THRESHOLD = 0.85
 
 export function emptyProgress(): Progress {

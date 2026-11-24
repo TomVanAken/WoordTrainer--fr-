@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { awardBadges } from './progress/rules.ts'
 import type { Chapter } from './types.ts'
 import { ChapterGate } from './components/ChapterGate.tsx'
 import { chaptersBaseUrl, loadChapters } from './data/loadChapters.ts'
@@ -25,6 +26,12 @@ function Trainer({ chapters, failed }: { chapters: Chapter[]; failed: string[] }
   const cards = useMemo(() => buildCards(chapters), [chapters])
   const cardIds = useMemo(() => new Set(cards.map((c) => c.id)), [cards])
   const { progress, update, reset } = useProgress(cardIds, failed.length === 0)
+  // Saved progress can hold cards that are known under the current KNOWN_AFTER (it was lowered from
+  // 3 to 2) without the matching chapter badge, because badges are only awarded when answering.
+  // Catch up once the cards are loaded; it stops as soon as there is nothing new to award.
+  useEffect(() => {
+    if (awardBadges(progress, cards).newBadges.length > 0) update((p) => awardBadges(p, cards).progress)
+  }, [progress, cards, update])
   const [screen, setScreen] = useState<Screen>({ name: 'home' })
   const home = () => setScreen({ name: 'home' })
   const rng = Math.random

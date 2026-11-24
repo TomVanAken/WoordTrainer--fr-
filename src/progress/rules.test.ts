@@ -14,11 +14,11 @@ const withKnown = (ids: string[]) => {
   return p
 }
 
-test('known only after 3 correct typed answers in a row', () => {
+test('known only after 2 correct typed answers in a row', () => {
   let p = emptyProgress()
-  p = recordTyped(p, 'a|fr-nl', true, 'test'); p = recordTyped(p, 'a|fr-nl', true, 'exam')
+  p = recordTyped(p, 'a|fr-nl', true, 'test')
   expect(isKnown(p, 'a|fr-nl')).toBe(false)
-  p = recordTyped(p, 'a|fr-nl', true, 'test'); expect(isKnown(p, 'a|fr-nl')).toBe(true)
+  p = recordTyped(p, 'a|fr-nl', true, 'exam'); expect(isKnown(p, 'a|fr-nl')).toBe(true)
   p = recordTyped(p, 'a|fr-nl', false, 'exam'); expect(isKnown(p, 'a|fr-nl')).toBe(false)
   expect(p.cards['a|fr-nl'].wrongTotal).toBe(1)
 })

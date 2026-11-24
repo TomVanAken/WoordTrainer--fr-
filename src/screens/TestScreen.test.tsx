@@ -184,7 +184,7 @@ test('Test: a badge celebration names the chapter', async () => {
   const target = all.find((c) => c.display === 'une maison')!
   const almost: Progress = {
     ...emptyProgress(),
-    cards: Object.fromEntries(all.map((c) => [c.id, { inARow: c.id === target.id ? 2 : 3, wrongTotal: 0 }])),
+    cards: Object.fromEntries(all.map((c) => [c.id, { inARow: c.id === target.id ? 1 : 2, wrongTotal: 0 }])),
   }
   setup([target], almost)
   await userEvent.type(input(), correctFor(prompt()) + '{Enter}')

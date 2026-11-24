@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
 import { STORAGE_KEY } from './progress/storage.ts'
@@ -52,4 +52,19 @@ test('App navigates to the picker and back, and resets progress from settings', 
   expect(await screen.findByRole('button', { name: /Oefenen/ })).toBeInTheDocument()
   expect(screen.queryByText('42')).not.toBeInTheDocument()
   expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+})
+
+test('App awards a badge for cards already answered correctly twice in a row', async () => {
+  const card = (inARow: number) => ({ inARow, wrongTotal: 0 })
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      version: 1, points: 0, currentStreak: 0, bestStreak: 0, badges: [],
+      cards: { 'ch00-001|fr-nl': card(2), 'ch00-001|nl-fr': card(2) }, exam: null,
+    }),
+  )
+  render(<App />)
+  expect(await screen.findByText('100%')).toBeInTheDocument()
+  await waitFor(() => expect(screen.getByRole('img', { name: /I got this/ })).toHaveAttribute('data-earned', 'true'))
+  expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).badges).toEqual(['ch00'])
 })

@@ -82,7 +82,7 @@ smartphone).
 - A chapter contains entries (a word or phrase) with one or more accepted French forms
   and one or more accepted Dutch forms (for example *une maison → het huis, de woning*).
 - **Each entry is two cards:** FR→NL and NL→FR. Each card tracks its own progress.
-- **A card is "known" once its last three typed answers (Test or Exam) were correct.** One
+- **A card is "known" once its last two typed answers (Test or Exam) were correct.** One
   wrong typed answer resets that.
 - Flip-card answers in Practice never change whether a card is known.
 
