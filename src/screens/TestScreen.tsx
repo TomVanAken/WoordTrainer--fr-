@@ -56,28 +56,27 @@ export function TestScreen(props: ScreenProps) {
     if (answered.current) return
     answered.current = true
     const correct = !dontKnow && checkAnswer(typed, card, gender)
-    if (!current.retry) {
-      // update() runs the callback synchronously on the latest progress, so we can read its result.
-      let best = progress.bestStreak
-      let newBadges: string[] = []
-      update((p) => {
-        const awarded = awardBadges(recordTyped(p, card.id, correct, 'test'), allCards ?? cards)
-        best = awarded.progress.bestStreak
-        newBadges = awarded.newBadges
-        return awarded.progress
-      })
-      if (correct) setPoints((n) => n + 3)
-      const items: CelebrationItem[] = []
-      // No record on his very first streak ever: there was nothing to beat yet.
-      if (startBest.current > 0 && best > startBest.current && !recordShown.current) {
-        recordShown.current = true
-        items.push({ kind: 'record', label: `Nieuw record! Reeks van ${best}` })
-      }
-      for (const id of newBadges) {
-        items.push({ kind: 'badge', label: `Badge verdiend: ${chapterTitles[id] ?? id}!` })
-      }
-      celebrations.add(items)
+    // Retries score like any other answer.
+    // update() runs the callback synchronously on the latest progress, so we can read its result.
+    let best = progress.bestStreak
+    let newBadges: string[] = []
+    update((p) => {
+      const awarded = awardBadges(recordTyped(p, card.id, correct, 'test'), allCards ?? cards)
+      best = awarded.progress.bestStreak
+      newBadges = awarded.newBadges
+      return awarded.progress
+    })
+    if (correct) setPoints((n) => n + 3)
+    const items: CelebrationItem[] = []
+    // No record on his very first streak ever: there was nothing to beat yet.
+    if (startBest.current > 0 && best > startBest.current && !recordShown.current) {
+      recordShown.current = true
+      items.push({ kind: 'record', label: `Nieuw record! Reeks van ${best}` })
     }
+    for (const id of newBadges) {
+      items.push({ kind: 'badge', label: `Badge verdiend: ${chapterTitles[id] ?? id}!` })
+    }
+    celebrations.add(items)
     setFeedback({ correct, typed, gender, retry: current.retry, dontKnow })
   }
 
@@ -113,7 +112,7 @@ export function TestScreen(props: ScreenProps) {
         <div className={`feedback ${feedback.correct ? 'feedback-ok' : 'feedback-bad'}`} role="status" data-testid="feedback">
           {feedback.correct ? (
             <p className="feedback-title">
-              <span aria-hidden="true">✓</span> {feedback.retry ? 'Goed!' : 'Goed! +3'}
+              <span aria-hidden="true">✓</span> Goed! +3
             </p>
           ) : feedback.dontKnow ? (
             <p className="feedback-title">

@@ -79,7 +79,7 @@ test('Test: "le maison" for "une maison" is wrong and shows "Juist: une maison"'
   expect(prog().points).toBe(0)
 })
 
-test('Test: wrong answer resets the streak, card comes back as a retry without points', async () => {
+test('Test: wrong answer resets the streak, card comes back as a retry that scores like any answer', async () => {
   setup()
   await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
   await userEvent.keyboard('{Enter}')
@@ -95,10 +95,9 @@ test('Test: wrong answer resets the streak, card comes back as a retry without p
   expect(prompt()).toBe(missed)
   const before = prog()
   await userEvent.type(input(), correctFor(missed) + '{Enter}')
-  expect(screen.getByText('Goed!')).toBeInTheDocument()
-  expect(prog().points).toBe(before.points)
-  expect(prog().cards).toEqual(before.cards)
-  expect(prog().currentStreak).toBe(before.currentStreak)
+  expect(screen.getByText('Goed! +3')).toBeInTheDocument()
+  expect(prog().points).toBe(before.points + 3)
+  expect(prog().currentStreak).toBe(before.currentStreak + 1)
 })
 
 test('Test: pressing Enter on an empty input does nothing', async () => {
@@ -268,11 +267,13 @@ test('Test: "Weet ik niet" counts as a wrong answer and the card comes back as a
     await userEvent.keyboard('{Enter}')
   }
   expect(prompt()).toBe(missed)
-  // a "Weet ik niet" on the retry only puts the card back in the round
+  // a "Weet ik niet" on the retry counts as wrong again, and puts the card back in the round
   const before = prog()
   await userEvent.click(screen.getByRole('button', { name: 'Weet ik niet' }))
   expect(screen.getByText(/Je wist het niet\./)).toBeInTheDocument()
-  expect(prog()).toEqual(before)
+  expect(prog().points).toBe(before.points)
+  expect(prog().currentStreak).toBe(0)
+  expect(prog().cards[missedCard.id]).toEqual({ inARow: 0, wrongTotal: 2 })
   await userEvent.keyboard('{Enter}')
   expect(prompt()).toBe(missed) // last card left, so it is asked again right away
   await userEvent.type(input(), correctFor(missed) + '{Enter}')
