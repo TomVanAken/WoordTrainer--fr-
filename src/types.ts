@@ -7,6 +7,7 @@ export interface Entry {
   frCaps?: boolean // true = French answers must match capitals exactly
   nlCaps?: boolean
   hint?: string // Dutch context shown under the prompt in both directions; never typed
+  gender?: Gender // gender of a plural noun (des ...); un/une nouns carry theirs in the article
 }
 export interface Chapter {
   id: string
@@ -16,13 +17,14 @@ export interface Chapter {
 export interface Answer {
   text: string
   caseSensitive: boolean
+  gender?: Gender // from the entry (needed for des-forms)
 }
 export interface Card {
   id: string // `${entryId}|${direction}`
   entryId: string
   chapterId: string
   direction: Direction
-  prompt: string // source forms joined with " / "
+  prompt: string // source forms joined with " / " (French ones without un/une/des)
   answers: Answer[] // accepted target forms (including same-prompt entries, see Task 3)
   display: string // the entry's own target forms joined with " / " (shown as "the correct answer")
   hint?: string // the entry's Dutch context hint, if any

@@ -1,10 +1,10 @@
-type Props = { title: string; percent: number; earned: boolean }
+type Props = { title: string; known: number; total: number; percent: number; earned: boolean }
 
-export function ChapterTile({ title, percent, earned }: Props) {
+export function ChapterTile({ title, known, total, percent, earned }: Props) {
   return (
     <li className="tile">
       <div className="tile-head">
-        <span className="tile-title">{title}</span>
+        <span className="tile-title">{title} ({known}/{total})</span>
         <span
           role="img"
           className={earned ? 'badge badge-earned' : 'badge'}

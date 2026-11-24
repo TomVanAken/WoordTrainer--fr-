@@ -5,8 +5,8 @@ import { keepInputFocus } from './keepInputFocus.ts'
 type Props = {
   /** `gender` is passed only when the un/une question was asked. */
   onSubmit: (text: string, gender?: Gender) => void
-  /** Whether this typed text needs an un/une choice before it can be submitted (an l' answer). */
-  askGender?: (typed: string) => boolean
+  /** Whether this question needs a gender choice before it can be submitted (a noun answer). */
+  askGender?: boolean
   /** Shows a "Weet ik niet" button while the question is waiting for an answer (never on Enter). */
   onDontKnow?: () => void
   /** When this changes, the input is cleared and refocused (a new question without a feedback state). */
@@ -20,7 +20,7 @@ export function AnswerInput({ onSubmit, askGender, onDontKnow, questionKey, inpu
   const [gender, setGender] = useState<Gender | null>(null)
   const [hint, setHint] = useState(false)
   const radioName = useId()
-  const showGender = askGender?.(value) ?? false
+  const showGender = askGender ?? false
   const ownRef = useRef<HTMLInputElement>(null)
   const ref = inputRef ?? ownRef
   // Set by a submit until a new question starts (a new questionKey or a fresh mount), so a fast
@@ -51,10 +51,6 @@ export function AnswerInput({ onSubmit, askGender, onDontKnow, questionKey, inpu
 
   const change = (text: string) => {
     setValue(text)
-    if (!askGender?.(text)) {
-      setGender(null)
-      setHint(false)
-    }
   }
 
   // A browser focuses the radio when it (or its label) is tapped; hand the focus straight back to

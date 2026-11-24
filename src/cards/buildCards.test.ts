@@ -31,19 +31,19 @@ test('two cards per entry with ids entryId|direction', () => {
 
 test('prompt joins source forms with " / "', () => {
   const cards = buildCards(chapters)
-  expect(cards.find((c) => c.id === 'ch1-001|fr-nl')!.prompt).toBe('une maison')
+  expect(cards.find((c) => c.id === 'ch1-001|fr-nl')!.prompt).toBe('maison') // no un/une in a French prompt
   expect(cards.find((c) => c.id === 'ch1-001|nl-fr')!.prompt).toBe('het huis / de woning')
 })
 
 test('entries sharing a source form accept each other’s answers', () => {
   const cards = buildCards(chapters)
   const c = cards.find((x) => x.id === 'ch1-001|nl-fr')!
-  expect(checkAnswer('un logement', c)).toBe(true)
-  expect(checkAnswer('une maison', c)).toBe(true)
-  expect(c.display).toBe('une maison')
+  expect(checkAnswer('un logement', c, 'm')).toBe(true)
+  expect(checkAnswer('une maison', c, 'f')).toBe(true)
+  expect(c.display).toBe('maison (f)')
   const other = cards.find((x) => x.id === 'ch2-001|nl-fr')!
-  expect(checkAnswer('une maison', other)).toBe(true)
-  expect(other.display).toBe('un logement')
+  expect(checkAnswer('une maison', other, 'f')).toBe(true)
+  expect(other.display).toBe('logement (m)')
 })
 
 test('answers carry their own entry’s caps flag and have no duplicates', () => {
@@ -96,8 +96,13 @@ test('the answer must fit the hint: same prompt, different hint is not accepted'
 test('same prompt and same hint still accept each other; no hint only groups with no hint', () => {
   const cards = buildCards(warm)
   const huis = cards.find((c) => c.id === 'ch1-003|nl-fr')!
-  expect(checkAnswer('un logement', huis)).toBe(true)
-  expect(checkAnswer('un foyer', huis)).toBe(false)
+  expect(checkAnswer('un logement', huis, 'm')).toBe(true)
+  expect(checkAnswer('un foyer', huis, 'm')).toBe(false)
   const foyer = cards.find((c) => c.id === 'ch1-005|nl-fr')!
-  expect(checkAnswer('une maison', foyer)).toBe(false)
+  expect(checkAnswer('une maison', foyer, 'f')).toBe(false)
+})
+
+test('the entry gender goes to its answers', () => {
+  const cards = buildCards([{ id: 'ch1', title: 'x', entries: [{ id: 'ch1-001', fr: ['des vacances'], nl: ['vakantie'], gender: 'f' }] }])
+  expect(cards.find((c) => c.direction === 'nl-fr')!.answers[0].gender).toBe('f')
 })

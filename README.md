@@ -30,7 +30,7 @@ Alleen een wijziging in de code zorgt voor een nieuwe publicatie. Een nieuw hoof
 ## Een hoofdstuk toevoegen
 
 1. Stuur foto's van het hoofdstuk naar Claude.
-2. Claude schrijft `public/chapters/chNN.json` (enkelvoudige zelfstandige naamwoorden altijd met *un/une*, woorden die alleen in het meervoud bestaan met *des*).
+2. Claude schrijft `public/chapters/chNN.json` (enkelvoudige zelfstandige naamwoorden altijd met *un/une*, woorden die alleen in het meervoud bestaan met *des* en een `"gender": "m"` of `"f"`).
 3. Claude zet het bestand in `public/chapters/index.json`, draait `npm run check-chapters`, commit en pusht.
 
 Het hoofdstuk is binnen ongeveer 5 minuten live, zonder dat de app opnieuw gepubliceerd wordt: de app leest de hoofdstukken rechtstreeks uit de repo.

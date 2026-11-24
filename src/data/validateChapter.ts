@@ -57,6 +57,10 @@ export function validateChapter(data: unknown, fileName: string): Checked<Chapte
       const hint = raw.hint.trim()
       if (hint !== '') entry.hint = hint
     }
+    if (raw.gender !== undefined) {
+      if (raw.gender !== 'm' && raw.gender !== 'f') return fail(`entry ${id}: gender must be "m" or "f"`)
+      entry.gender = raw.gender
+    }
     entries.push(entry)
   }
   return { ok: true, value: { id: expectedId, title: data.title, entries } }
@@ -81,4 +85,11 @@ export function articleWarnings(chapter: Chapter): string[] {
     }
   }
   return out
+}
+
+/** A des-noun needs the gender of its noun, because he has to choose it (the app can't tell from "des"). */
+export function desGenderWarnings(chapter: Chapter): string[] {
+  return chapter.entries
+    .filter((e) => !e.gender && e.fr.some((f) => /^des\s/i.test(f)))
+    .map((e) => `entry ${e.id}: a des-form without "gender": "m" or "f" (leave it out only for a phrase)`)
 }

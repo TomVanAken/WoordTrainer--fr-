@@ -54,7 +54,7 @@
     { "id": "ch02-050", "fr": ["une plaie"], "nl": ["de (open) wonde", "de (open) wond"], "hint": "" },
     { "id": "ch02-051", "fr": ["une salle d'opération"], "nl": ["de operatiezaal"], "hint": "" },
     { "id": "ch02-052", "fr": ["un SAMU"], "nl": ["de MUG"], "hint": "" },
-    { "id": "ch02-053", "fr": ["des urgences"], "nl": ["de spoedgevallen"], "hint": "" },
+    { "id": "ch02-053", "gender": "f", "fr": ["des urgences"], "nl": ["de spoedgevallen"], "hint": "" },
     { "id": "ch02-054", "fr": ["gonflé(e)"], "nl": ["gezwollen"], "hint": "" },
     { "id": "ch02-055", "fr": ["ausculter"], "nl": ["onderzoeken"], "hint": "" },
     { "id": "ch02-056", "fr": ["avoir des douleurs"], "nl": ["pijnen hebben"], "hint": "" },

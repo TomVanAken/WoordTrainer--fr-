@@ -1,4 +1,4 @@
-import { articleWarnings, missingHintWarnings, validateChapter, validateChapterList } from './validateChapter.ts'
+import { articleWarnings, desGenderWarnings, missingHintWarnings, validateChapter, validateChapterList } from './validateChapter.ts'
 
 const good = { id: 'ch03', title: 'Hoofdstuk 3', entries: [{ id: 'ch03-001', fr: ['une maison'], nl: ['het huis'] }] }
 
@@ -15,6 +15,7 @@ test.each([
   ['caps not boolean', { ...good, entries: [{ id: 'ch03-001', fr: ['x'], nl: ['y'], frCaps: 'yes' }] }],
   ['duplicate entry id', { ...good, entries: [good.entries[0], good.entries[0]] }],
   ['hint not a string', { ...good, entries: [{ id: 'ch03-001', fr: ['x'], nl: ['y'], hint: 3 }] }],
+  ['gender not m or f', { ...good, entries: [{ id: 'ch03-001', fr: ['des x'], nl: ['y'], gender: 'n' }] }],
   ['not an object', 'oops'],
 ])('rejects %s', (_, data) => expect(validateChapter(data, 'ch03.json').ok).toBe(false))
 
@@ -48,4 +49,12 @@ test('missingHintWarnings flags only entries without a hint property', () => {
   expect(w).toHaveLength(1)
   expect(w[0]).toContain('ch03-001')
   expect(missingHintWarnings('oops')).toEqual([])
+})
+
+test('a gender of an entry is kept; des-forms without one are warned about', () => {
+  const r = validateChapter({ ...good, entries: [{ id: 'ch03-001', fr: ['des vacances'], nl: ['vakantie'], gender: 'f' }] }, 'ch03.json')
+  expect(r.ok && r.value.entries[0].gender).toBe('f')
+  const none = validateChapter({ ...good, entries: [{ id: 'ch03-001', fr: ['des vacances'], nl: ['vakantie'] }] }, 'ch03.json')
+  expect(none.ok && desGenderWarnings(none.value)).toHaveLength(1)
+  expect(r.ok && desGenderWarnings(r.value)).toEqual([])
 })

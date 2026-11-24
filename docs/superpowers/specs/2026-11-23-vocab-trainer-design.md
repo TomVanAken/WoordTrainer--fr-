@@ -145,20 +145,19 @@ smartphone).
     vs *Frans* (capital required).
 - **The Dutch article (de/het/een) is optional and not checked.** *huis* and *het huis*
   are both correct; so are *Fransman* and *een Fransman*.
-- **The French article is mandatory for singular nouns, and it must have the right
-  gender** (decided by the parent, changed 2026-11-23). Both the indefinite (*un/une*)
-  and the definite (*le/la/l'*) article are accepted.
-  - *une maison* and *la maison* are correct. *maison*, *un maison* and *le maison* are
-    wrong. The feedback always shows the *un/une* form (*une maison*).
+- **The French article is optional, but if typed it must be right; the gender is always
+  asked for nouns** (decided by the parent, changed 2026-11-24). *Maison* and *une maison*
+  and *la maison* are all correct; *un maison* and *le maison* are wrong.
   - Before a vowel the definite article is *l'*: *une école* and *l'école* are correct,
     *la école* is wrong. Before *h* both *l'* and *le/la* are accepted (the data doesn't
     know which *h* is aspirated).
-  - **Gender choice for *l'*:** *l'* hides the gender, so as soon as his answer starts
-    with *l'* the app shows a required choice "Mannelijk (un)" / "Vrouwelijk (une)". He
-    can't continue until he picks one, or taps "Weet ik niet". *l'école* + vrouwelijk is
-    correct; *l'école* + mannelijk is wrong. This applies in Test and Exam.
-  - Plural-only nouns are written with *des* (*des vacances*). Plural has no gender, so
-    the article is optional there: *vacances*, *des vacances* and *les vacances* are all
+  - **Gender choice, always:** on every NL→FR card with a noun answer (singular *un/une*
+    or plural-only *des*) the app shows a required choice "Mannelijk (un)" /
+    "Vrouwelijk (une)", also when he typed no article. He can't continue until he picks
+    one, or taps "Weet ik niet". The choice must match the noun: *école* + vrouwelijk is
+    correct, *école* + mannelijk is wrong. This applies in Test and Exam.
+  - Plural-only nouns are written with *des* and carry a `"gender"` in the data (the
+    singular's gender). *vacances*, *des vacances* and *les vacances* + vrouwelijk are
     correct.
   - Everything else (verbs, adjectives, phrases such as *à la maison*) is compared as
     written, article and all.
@@ -291,9 +290,9 @@ can't list a folder anyway).
   uses *le/la/l'* (`une maison`, `une école`, `un hôtel`). Claude takes the gender from
   the book (or a dictionary when the book only shows *l'*). Plural-only nouns are written
   with *des* (`des vacances`). The app treats a form starting with *un/une* as a noun
-  whose article is required (*un/une* or the matching *le/la/l'*), and a form starting
-  with *des* as one whose article is optional. The stored *un/une* is also what tells
-  the app the gender of an *l'* noun.
+  whose article is optional (if typed: *un/une* as stored or the matching *le/la/l'*), and
+  a form starting with *des* likewise (*des* or *les*). The stored *un/une* tells the
+  app the gender; for *des* the entry has a `"gender": "m" | "f"` field.
 - `npm run check-chapters` warns about French forms that start with *le, la, l'* or
   *les*, so a noun copied from the book without converting its article is caught before
   commit. It is a warning, not a failure, because some phrases really start that way

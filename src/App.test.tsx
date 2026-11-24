@@ -30,7 +30,7 @@ test('App loads chapters and shows the home screen', async () => {
   render(<App />)
   expect(screen.getByRole('heading', { name: /woordtrainer/i })).toBeInTheDocument()
   expect(screen.getByText('Woorden laden…')).toBeInTheDocument()
-  expect(await screen.findByText('Hoofdstuk 0')).toBeInTheDocument()
+  expect(await screen.findByText(/^Hoofdstuk 0 \(\d+\/\d+\)$/)).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Oefenen/ })).toBeInTheDocument()
 })
 

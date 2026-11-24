@@ -64,7 +64,7 @@ test('applyExam awards a badge once the chapter crosses 85%', () => {
 test('answerExam stores the gender with each answer and scoreExam uses it', () => {
   const ecole: Card = {
     id: 'e|nl-fr', entryId: 'e', chapterId: 'c', direction: 'nl-fr',
-    prompt: 'school', answers: [{ text: 'une école', caseSensitive: false }], display: 'une école',
+    prompt: 'school', answers: [{ text: 'une école', caseSensitive: false }], display: 'école (f)',
   }
   const ok = card('c', 1)
   let s = createExam([ecole.id, ok.id, ecole.id])

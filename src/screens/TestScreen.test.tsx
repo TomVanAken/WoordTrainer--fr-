@@ -55,6 +55,16 @@ const input = () => screen.getByRole('textbox')
 const feedback = () => screen.getByTestId('feedback')
 const correctFor = (p: string) => all.find((c) => c.prompt === p)!.answers[0].text
 
+/** Types an answer, picks a gender when asked (any noun card: une → vrouwelijk, else mannelijk), presses Enter. */
+async function typeAnswer(text: string, enter = true) {
+  await userEvent.type(input(), text)
+  if (screen.queryByRole('radio', { name: 'Mannelijk (un)' })) {
+    await userEvent.click(screen.getByRole('radio', { name: /^une /.test(text) ? 'Vrouwelijk (une)' : 'Mannelijk (un)' }))
+  }
+  if (enter) await userEvent.keyboard('{Enter}')
+}
+const typeCorrect = (p: string = prompt(), enter = true) => typeAnswer(correctFor(p), enter)
+
 afterEach(() => {
   vi.useRealTimers()
   localStorage.clear()
@@ -62,7 +72,7 @@ afterEach(() => {
 
 test('Test: correct answer shows "Goed! +3", adds 3 points and raises the streak', async () => {
   setup()
-  await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  await typeCorrect()
   expect(screen.getByText('Goed! +3')).toBeInTheDocument()
   expect(prog().points).toBe(3)
   expect(prog().currentStreak).toBe(1)
@@ -70,31 +80,31 @@ test('Test: correct answer shows "Goed! +3", adds 3 points and raises the streak
   expect(screen.getByTestId('round-points')).toHaveTextContent('3')
 })
 
-test('Test: "le maison" for "une maison" is wrong and shows "Juist: une maison"', async () => {
-  setup(all.filter((c) => c.display === 'une maison'))
+test('Test: "le maison" for "une maison" is wrong and shows "Juist: maison (f)"', async () => {
+  setup(all.filter((c) => c.display === 'maison (f)'))
   expect(prompt()).toBe('huis')
-  await userEvent.type(input(), 'le maison{Enter}')
-  expect(screen.getByText(/Jij typte:/)).toHaveTextContent('Jij typte: le maison')
-  expect(screen.getByText(/Juist:/)).toHaveTextContent('Juist: une maison')
+  await typeAnswer('le maison')
+  expect(screen.getByText(/Jij typte:/)).toHaveTextContent('Jij typte: le maison (m)')
+  expect(screen.getByText(/Juist:/)).toHaveTextContent('Juist: maison (f)')
   expect(prog().points).toBe(0)
 })
 
 test('Test: wrong answer resets the streak, card comes back as a retry that scores like any answer', async () => {
   setup()
-  await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  await typeCorrect()
   await userEvent.keyboard('{Enter}')
   expect(prog().currentStreak).toBe(1)
   const missed = prompt()
-  await userEvent.type(input(), 'xxx{Enter}')
+  await typeAnswer('xxx')
   expect(prog().currentStreak).toBe(0)
   expect(prog().points).toBe(3)
   await userEvent.click(screen.getByRole('button', { name: 'Volgende' }))
   // queue was [missed, other]: the missed card returns after the one remaining card
-  await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  await typeCorrect()
   await userEvent.keyboard('{Enter}')
   expect(prompt()).toBe(missed)
   const before = prog()
-  await userEvent.type(input(), correctFor(missed) + '{Enter}')
+  await typeCorrect(missed)
   expect(screen.getByText('Goed! +3')).toBeInTheDocument()
   expect(prog().points).toBe(before.points + 3)
   expect(prog().currentStreak).toBe(before.currentStreak + 1)
@@ -115,7 +125,7 @@ test('Test: pressing Enter on an empty input does nothing', async () => {
 test('Test: the round summary appears after every card has been answered correctly', async () => {
   const { onExit } = setup()
   for (let i = 0; i < 3; i++) {
-    await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+    await typeCorrect()
     await userEvent.keyboard('{Enter}')
   }
   expect(screen.getByText(/3 van de 3/)).toBeInTheDocument()
@@ -142,6 +152,9 @@ test('Test: beating an existing record shows the record celebration once, then i
   setup(all, { ...emptyProgress(), bestStreak: 1 })
   const answer = (text: string) => {
     fireEvent.change(input(), { target: { value: text } })
+    if (screen.queryByRole('radio', { name: 'Mannelijk (un)' })) {
+      fireEvent.click(screen.getByRole('radio', { name: /^une /.test(text) ? 'Vrouwelijk (une)' : 'Mannelijk (un)' }))
+    }
     fireEvent.keyDown(input(), { key: 'Enter' })
   }
   const enter = () => fireEvent.click(screen.getByRole('button', { name: 'Volgende' }))
@@ -167,27 +180,27 @@ test('Test: beating an existing record shows the record celebration once, then i
 
 test('Test: the very first correct answer ever is not celebrated as a record', async () => {
   setup()
-  await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  await typeCorrect()
   expect(screen.getByText('Goed! +3')).toBeInTheDocument()
   expect(screen.queryByText(/Nieuw record/)).not.toBeInTheDocument()
 })
 
 test('Test: the record celebration can be closed with its button', async () => {
   setup(all, { ...emptyProgress(), bestStreak: 1, currentStreak: 1 })
-  await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  await typeCorrect()
   expect(screen.getByText(/Nieuw record/)).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Sluiten' }))
   expect(screen.queryByText(/Nieuw record/)).not.toBeInTheDocument()
 })
 
 test('Test: a badge celebration names the chapter', async () => {
-  const target = all.find((c) => c.display === 'une maison')!
+  const target = all.find((c) => c.display === 'maison (f)')!
   const almost: Progress = {
     ...emptyProgress(),
     cards: Object.fromEntries(all.map((c) => [c.id, { inARow: c.id === target.id ? 1 : 2, wrongTotal: 0 }])),
   }
   setup([target], almost)
-  await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  await typeCorrect()
   // no record (best streak was 0 at the start), so the badge shows right away
   expect(screen.queryByText(/Nieuw record/)).not.toBeInTheDocument()
   expect(screen.getByText(/Badge.*Hoofdstuk 0/)).toBeInTheDocument()
@@ -196,13 +209,13 @@ test('Test: a badge celebration names the chapter', async () => {
 
 test('Test: during feedback the input is gone and the feedback says Goed!/Fout in words', async () => {
   setup()
-  await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  await typeCorrect()
   expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
   expect(feedback()).toHaveAttribute('role', 'status')
   expect(feedback()).toHaveTextContent('✓ Goed! +3')
   expect(screen.getByRole('button', { name: 'Volgende' })).toHaveFocus()
   await userEvent.keyboard('{Enter}')
-  await userEvent.type(input(), 'xxx{Enter}')
+  await typeAnswer('xxx')
   expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
   expect(feedback()).toHaveTextContent(/✗ Fout/)
   expect(feedback()).toHaveTextContent('Jij typte: xxx')
@@ -211,7 +224,7 @@ test('Test: during feedback the input is gone and the feedback says Goed!/Fout i
 test('Test: Enter on Volgende advances exactly once and the input is back and focused', async () => {
   setup()
   const first = prompt()
-  await userEvent.type(input(), correctFor(first) + '{Enter}')
+  await typeCorrect(first)
   await userEvent.keyboard('{Enter}')
   const second = prompt()
   expect(second).not.toBe(first)
@@ -224,7 +237,7 @@ test('Test: Enter on Volgende advances exactly once and the input is back and fo
 test('Test: after clicking Volgende the input is back and focused', async () => {
   setup()
   const first = prompt()
-  await userEvent.type(input(), correctFor(first) + '{Enter}')
+  await typeCorrect(first)
   await userEvent.click(screen.getByRole('button', { name: 'Volgende' }))
   expect(prompt()).not.toBe(first)
   expect(input()).toHaveFocus()
@@ -233,7 +246,8 @@ test('Test: after clicking Volgende the input is back and focused', async () => 
 test('Test: submit then an immediate second Enter advances exactly once and records one answer', async () => {
   setup()
   const first = prompt()
-  await userEvent.type(input(), correctFor(first) + '{Enter}{Enter}')
+  await typeCorrect(first)
+  await userEvent.keyboard('{Enter}')
   const second = prompt()
   expect(second).not.toBe(first)
   expect(screen.queryByText(/Goed!/)).not.toBeInTheDocument()
@@ -263,7 +277,7 @@ test('Test: "Weet ik niet" counts as a wrong answer and the card comes back as a
   await userEvent.keyboard('{Enter}')
   expect(screen.getByRole('button', { name: 'Weet ik niet' })).toBeInTheDocument()
   for (let i = 0; i < 3 && prompt() !== missed; i++) {
-    await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+    await typeCorrect()
     await userEvent.keyboard('{Enter}')
   }
   expect(prompt()).toBe(missed)
@@ -276,7 +290,7 @@ test('Test: "Weet ik niet" counts as a wrong answer and the card comes back as a
   expect(prog().cards[missedCard.id]).toEqual({ inARow: 0, wrongTotal: 2 })
   await userEvent.keyboard('{Enter}')
   expect(prompt()).toBe(missed) // last card left, so it is asked again right away
-  await userEvent.type(input(), correctFor(missed) + '{Enter}')
+  await typeCorrect(missed)
   await userEvent.keyboard('{Enter}')
   expect(screen.getByText(/2 van de 3/)).toBeInTheDocument()
 })
@@ -306,20 +320,32 @@ const extra = buildCards([
 const ecoleNlFr = extra.filter((c) => c.id === 'ch01-001|nl-fr')
 const genderGroup = () => screen.queryByRole('group', { name: 'Is het un of une?' })
 
-test("Test: the un/une choice appears only once the answer starts with l'", async () => {
+test('Test: the gender choice is there from the start for a noun, but not for FR → NL or non-nouns', async () => {
   setup(ecoleNlFr)
   expect(prompt()).toBe('school')
-  await userEvent.type(input(), 'la')
-  expect(genderGroup()).not.toBeInTheDocument()
-  await userEvent.clear(input())
-  await userEvent.type(input(), 'l’éc')
   expect(genderGroup()).toBeInTheDocument()
   expect(screen.getByRole('radio', { name: 'Mannelijk (un)' })).not.toBeChecked()
   expect(screen.getByRole('radio', { name: 'Vrouwelijk (une)' })).not.toBeChecked()
-  // editing it away from l' hides the group again
-  await userEvent.clear(input())
-  await userEvent.type(input(), 'une éc')
-  expect(genderGroup()).not.toBeInTheDocument()
+})
+
+test('Test: the article is optional, and the gender is needed even without it', async () => {
+  setup(ecoleNlFr)
+  await userEvent.type(input(), 'école{Enter}')
+  expect(screen.queryByTestId('feedback')).not.toBeInTheDocument()
+  expect(screen.getByText('Kies eerst un of une.')).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('radio', { name: 'Vrouwelijk (une)' }))
+  await userEvent.keyboard('{Enter}')
+  expect(feedback()).toHaveTextContent('✓ Goed!')
+})
+
+test('Test: a typed article must still be right, and so must the gender', async () => {
+  setup(ecoleNlFr)
+  await typeAnswer('un école')
+  expect(feedback()).toHaveTextContent('✗ Fout')
+  await userEvent.keyboard('{Enter}')
+  await typeAnswer('école') // the retry: mannelijk is wrong for école
+  expect(feedback()).toHaveTextContent('✗ Fout')
+  expect(feedback()).toHaveTextContent('Jij typte: école (m)')
 })
 
 test('Test: without a choice Enter does nothing and a hint shows', async () => {
@@ -341,10 +367,10 @@ test("Test: l'école with vrouwelijk is correct, with mannelijk wrong and shown 
   await userEvent.type(input(), '{Enter}')
   expect(feedback()).toHaveTextContent('✗ Fout')
   expect(feedback()).toHaveTextContent("Jij typte: l'école (m)")
-  expect(feedback()).toHaveTextContent('Juist: une école')
+  expect(feedback()).toHaveTextContent('Juist: école (f)')
   await userEvent.keyboard('{Enter}')
   // the retry: now with vrouwelijk
-  expect(genderGroup()).not.toBeInTheDocument()
+  expect(genderGroup()).toBeInTheDocument()
   await userEvent.type(input(), "l'école")
   await userEvent.click(screen.getByRole('radio', { name: 'Vrouwelijk (une)' }))
   expect(input()).toHaveFocus() // tapping the choice keeps the keyboard up
@@ -354,7 +380,7 @@ test("Test: l'école with vrouwelijk is correct, with mannelijk wrong and shown 
 
 test("Test: no un/une choice for FR → NL cards", async () => {
   setup(extra.filter((c) => c.id === 'ch01-001|fr-nl'))
-  await userEvent.type(input(), "l'school")
+  await userEvent.type(input(), 'school')
   expect(genderGroup()).not.toBeInTheDocument()
 })
 
@@ -364,7 +390,7 @@ test('Test: "Controleer" submits like Enter and keeps the focus on the input whe
   setup()
   expect(fireEvent.mouseDown(controleer())).toBe(false)
   expect(fireEvent.pointerDown(controleer())).toBe(false)
-  await userEvent.type(input(), correctFor(prompt()))
+  await typeCorrect(prompt(), false)
   await userEvent.click(controleer())
   expect(feedback()).toHaveTextContent('✓ Goed! +3')
   expect(Object.keys(prog().cards)).toHaveLength(1)

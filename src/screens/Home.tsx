@@ -53,14 +53,19 @@ export function Home({ progress, chapters, cards, onStart, onResumeExam, onSetti
       </div>
 
       <ul className="tiles">
-        {chapters.map((ch) => (
-          <ChapterTile
-            key={ch.id}
-            title={ch.title}
-            percent={chapterStats(progress, cards, ch.id).percent}
-            earned={progress.badges.includes(ch.id)}
-          />
-        ))}
+        {chapters.map((ch) => {
+          const { known, total, percent } = chapterStats(progress, cards, ch.id)
+          return (
+            <ChapterTile
+              key={ch.id}
+              title={ch.title}
+              known={known}
+              total={total}
+              percent={percent}
+              earned={progress.badges.includes(ch.id)}
+            />
+          )
+        })}
       </ul>
 
       <button type="button" className="btn btn-link" onClick={onSettings}>

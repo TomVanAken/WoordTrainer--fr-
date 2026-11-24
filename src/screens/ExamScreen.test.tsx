@@ -56,6 +56,16 @@ const prog = () => JSON.parse(screen.getByTestId('progress').textContent!) as Pr
 const prompt = () => screen.getByTestId('prompt').textContent!
 const input = () => screen.getByRole('textbox')
 const correctFor = (p: string) => all.find((c) => c.prompt === p)!.answers[0].text
+
+/** Types an answer, picks a gender when asked (any noun card: une → vrouwelijk, else mannelijk), presses Enter. */
+async function typeAnswer(text: string, enter = true) {
+  await userEvent.type(input(), text)
+  if (screen.queryByRole('radio', { name: 'Mannelijk (un)' })) {
+    await userEvent.click(screen.getByRole('radio', { name: /^une /.test(text) ? 'Vrouwelijk (une)' : 'Mannelijk (un)' }))
+  }
+  if (enter) await userEvent.keyboard('{Enter}')
+}
+const typeCorrect = (p: string = prompt(), enter = true) => typeAnswer(correctFor(p), enter)
 const examWith = (n: number, answers: string[] = []): Progress => ({
   ...emptyProgress(),
   exam: { cardIds: all.slice(0, n).map((c) => c.id), answers },
@@ -67,9 +77,9 @@ test('Exam shows no right/wrong feedback and no points while answering', async (
   setup()
   expect(screen.getByText('Vraag 1 / 6')).toBeInTheDocument()
   expect(screen.getByText(/FR → NL|NL → FR/)).toBeInTheDocument()
-  await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  await typeCorrect()
   expect(screen.getByText('Vraag 2 / 6')).toBeInTheDocument()
-  await userEvent.type(input(), 'xxx{Enter}')
+  await typeAnswer('xxx')
   expect(screen.getByText('Vraag 3 / 6')).toBeInTheDocument()
   expect(screen.queryByText(/Goed|Jij typte|Juist|Punten|Reeks|\+3/)).not.toBeInTheDocument()
   expect(prog().points).toBe(0)
@@ -79,7 +89,7 @@ test('Exam saves the new exam on start, and the answer input is focused on every
   setup()
   expect(prog().exam!.cardIds).toHaveLength(6)
   expect(input()).toHaveFocus()
-  await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  await typeCorrect()
   expect(input()).toHaveFocus()
   expect(input()).toHaveValue('')
 })
@@ -87,8 +97,8 @@ test('Exam saves the new exam on start, and the answer input is focused on every
 test('Exam progress is saved after each answer and can be resumed', async () => {
   const { view } = setup(null, examWith(5))
   expect(screen.getByText('Vraag 1 / 5')).toBeInTheDocument()
-  await userEvent.type(input(), 'a{Enter}')
-  await userEvent.type(input(), 'b{Enter}')
+  await typeAnswer('a')
+  await typeAnswer('b')
   expect(prog().exam!.answers).toEqual(['a', 'b'])
   expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).exam.answers).toEqual(['a', 'b'])
   view.unmount()
@@ -101,7 +111,7 @@ test('Exam end: score, list of wrong answers, points +3 per correct, streak unch
   const start: Progress = { ...examWith(4), currentStreak: 2, bestStreak: 5 }
   const { onExit } = setup(null, start)
   const typed = [correctFor(all[0].prompt), correctFor(all[1].prompt), correctFor(all[2].prompt), 'fout']
-  for (const t of typed) await userEvent.type(input(), t + '{Enter}')
+  for (const t of typed) await typeAnswer(t)
   expect(screen.getByText('75%')).toBeInTheDocument()
   expect(screen.getByText('3 / 4')).toBeInTheDocument()
   const wrong = screen.getByTestId('wrong-list')
@@ -118,7 +128,7 @@ test('Exam end: score, list of wrong answers, points +3 per correct, streak unch
 
 test('Exam end without mistakes shows a short message instead of a list', async () => {
   setup(null, examWith(2))
-  for (let i = 0; i < 2; i++) await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  for (let i = 0; i < 2; i++) await typeCorrect()
   expect(screen.getByText('100%')).toBeInTheDocument()
   expect(screen.getByText('2 / 2')).toBeInTheDocument()
   expect(screen.queryByTestId('wrong-list')).not.toBeInTheDocument()
@@ -150,7 +160,7 @@ test('Exam: a badge celebration appears after the result', async () => {
     cards: Object.fromEntries(all.map((c) => [c.id, { inARow: 2, wrongTotal: 0 }])),
   }
   setup(null, almost)
-  for (let i = 0; i < 6; i++) await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  for (let i = 0; i < 6; i++) await typeCorrect()
   expect(screen.getByText('100%')).toBeInTheDocument()
   expect(screen.getByText(/Badge.*Hoofdstuk 0/)).toBeInTheDocument()
   expect(prog().badges).toEqual(['ch00'])
@@ -164,8 +174,8 @@ test('Exam: "Weet ik niet" moves on and the result lists the card as "(weet ik n
   expect(prog().exam!.answers).toEqual([''])
   expect(input()).toHaveFocus()
   expect(screen.queryByText(/Juist|Je wist het niet/)).not.toBeInTheDocument()
-  await userEvent.type(input(), 'xxx{Enter}')
-  for (let i = 2; i < 6; i++) await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  await typeAnswer('xxx')
+  for (let i = 2; i < 6; i++) await typeCorrect()
   const list = screen.getByTestId('wrong-list')
   expect(list).toHaveTextContent(skipped)
   expect(list).toHaveTextContent('(weet ik niet)')
@@ -185,8 +195,8 @@ test('Exam stores the un/une choice with the answer and scores it', async () => 
   await userEvent.keyboard('{Enter}')
   expect(screen.getByText('Vraag 2 / 2')).toBeInTheDocument()
   expect(prog().exam).toEqual({ cardIds: ['ch01-001|nl-fr', maison.id], answers: ["l'école"], genders: ['f'] })
-  // the choice is per question
-  expect(screen.queryByRole('group', { name: 'Is het un of une?' })).not.toBeInTheDocument()
+  // the choice is per question: the next one starts without a choice
+  expect(screen.getByRole('radio', { name: 'Vrouwelijk (une)' })).not.toBeChecked()
   await userEvent.type(input(), "l'maison")
   await userEvent.click(screen.getByRole('radio', { name: 'Vrouwelijk (une)' }))
   await userEvent.keyboard('{Enter}')
@@ -197,7 +207,7 @@ test('Exam stores the un/une choice with the answer and scores it', async () => 
 test('Exam: an exam saved without genders still resumes', async () => {
   setup(null, examWith(2, ['xxx']))
   expect(screen.getByText('Vraag 2 / 2')).toBeInTheDocument()
-  await userEvent.type(input(), correctFor(prompt()) + '{Enter}')
+  await typeCorrect()
   expect(screen.getByText('1 / 2')).toBeInTheDocument()
   expect(screen.getByTestId('wrong-list')).toHaveTextContent('Jij typte: xxx')
 })
@@ -207,7 +217,7 @@ test('Exam: "Controleer" submits and moves to the next question; empty does noth
   const controleer = screen.getByRole('button', { name: 'Controleer' })
   await userEvent.click(controleer)
   expect(screen.getByText('Vraag 1 / 6')).toBeInTheDocument()
-  await userEvent.type(input(), correctFor(prompt()))
+  await typeCorrect(prompt(), false)
   await userEvent.click(screen.getByRole('button', { name: 'Controleer' }))
   expect(screen.getByText('Vraag 2 / 6')).toBeInTheDocument()
   expect(prog().exam!.answers).toHaveLength(1)

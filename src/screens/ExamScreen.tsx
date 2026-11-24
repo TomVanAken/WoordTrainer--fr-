@@ -98,7 +98,7 @@ export function ExamScreen({ cards, chapterTitles = {}, progress, update, rng, c
       {/* "Weet ik niet" is saved as an empty answer, which scoreExam counts as wrong. */}
       <AnswerInput
         onSubmit={(typed, gender) => submit(typed, gender ?? null)}
-        askGender={(typed) => asksGender(card, typed)}
+        askGender={asksGender(card)}
         onDontKnow={() => submit('')}
         questionKey={index}
       />

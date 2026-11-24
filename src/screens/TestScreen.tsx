@@ -143,7 +143,7 @@ export function TestScreen(props: ScreenProps) {
         <AnswerInput
           inputRef={inputRef}
           onSubmit={(typed, gender) => answer(typed, false, gender)}
-          askGender={(typed) => asksGender(card, typed)}
+          askGender={asksGender(card)}
           onDontKnow={() => answer('', true)}
         />
       )}

@@ -57,56 +57,71 @@ export function matchesForm(
 const VOWEL_START = /^[aeiouàâäéèêëîïôöùûüœæ]/i
 
 const UN_UNE = /^\s*(un|une)\s+(\S.*)$/i
+const DES = /^\s*des\s+(\S.*)$/i
 
-/** A form to compare against; `elided` is set on a generated l' form, which needs that gender. */
-type Form = { text: string; elided?: Gender }
+/** A form to compare against; `gender` is set on a noun form, whose gender he has to choose too. */
+type Form = { text: string; gender?: Gender }
 
 /**
- * A stored singular noun is written with un/une; the matching definite article is accepted too.
- * Elision follows the noun's first letter: a vowel (or œ) takes only l', an h takes l' as well as
- * le/la (aspirated h is not in the data), anything else takes le (un) or la (une). An l' form
- * hides the gender, so it carries the gender he has to choose with it.
- * Other forms (des-forms, phrases, verbs...) are returned unchanged.
+ * A noun is stored with un/une (singular) or des (plural-only). He may type it with or without
+ * an article, but a typed article must be right: un/une as stored, or the matching definite one
+ * (elision follows the first letter: a vowel or œ takes only l', an h takes l' as well as le/la,
+ * anything else takes le (un) or la (une); y is a consonant). des also accepts les.
+ * Every noun form carries its gender (from the article, or from the entry for des).
+ * Other forms (phrases, verbs...) are returned unchanged and have no gender.
  */
-export function frenchArticleForms(form: string): Form[] {
+export function frenchArticleForms(form: string, desGender?: Gender): Form[] {
   const m = UN_UNE.exec(form)
-  if (!m) return [{ text: form }]
-  const noun = m[2]
-  const gender: Gender = m[1].toLowerCase() === 'un' ? 'm' : 'f'
-  const forms: Form[] = [{ text: form }]
-  if (VOWEL_START.test(noun) || /^h/i.test(noun)) forms.push({ text: `l'${noun}`, elided: gender })
-  if (!VOWEL_START.test(noun)) forms.push({ text: `${gender === 'm' ? 'le' : 'la'} ${noun}` })
-  return forms
+  if (m) {
+    const noun = m[2]
+    const gender: Gender = m[1].toLowerCase() === 'un' ? 'm' : 'f'
+    const forms: Form[] = [{ text: noun, gender }, { text: form, gender }]
+    if (VOWEL_START.test(noun) || /^h/i.test(noun)) forms.push({ text: `l'${noun}`, gender })
+    if (!VOWEL_START.test(noun)) forms.push({ text: `${gender === 'm' ? 'le' : 'la'} ${noun}`, gender })
+    return forms
+  }
+  const d = DES.exec(form)
+  if (d && desGender) return [{ text: d[1], gender: desGender }, { text: form, gender: desGender }]
+  return [{ text: form }]
 }
 
-/**
- * Whether to ask "un of une?": an NL→FR card with at least one un/une answer, once the typed
- * text starts with l' (curly apostrophe too).
- */
-export function asksGender(card: Card, typed: string): boolean {
+/** Whether to ask for the gender: an NL→FR card with at least one noun answer (un/une, or des with a known gender). */
+export function asksGender(card: Card): boolean {
   if (card.direction !== 'nl-fr') return false
-  if (!normalize(typed, false).startsWith("l'")) return false
-  return card.answers.some((a) => expandOptional(a.text).some((v) => UN_UNE.test(v)))
+  return card.answers.some((a) =>
+    expandOptional(a.text).some((v) => UN_UNE.test(v) || (DES.test(v) && a.gender !== undefined)),
+  )
 }
 
 /**
  * Typed text may itself use the book's "(...)" notation (être fatigué(e)): it is correct when
  * EVERY form it stands for is an accepted form, so une clim(e) for une clim(atisation) is wrong
  * (une clime is not a form) and a hedge like (une) maison for une maison is wrong too.
- * `gender` is his un/une choice for an l' answer; an l' answer without it is never correct.
+ * The article is optional but must be right if typed. `gender` is his choice; for a noun answer
+ * it has to match the noun's gender (no choice = never correct).
  */
 export function checkAnswer(typed: string, card: Card, gender?: Gender): boolean {
+  if (checkSingle(typed, card, gender)) return true
+  // Several accepted answers may be entered together (verpakken, inpakken / verpakken / inpakken):
+  // correct when every part is an accepted answer.
+  const parts = typed.split(/\s*[,/;]\s*/)
+  if (parts.length < 2 || parts.some((p) => p.trim() === '')) return false
+  return parts.every((p) => checkSingle(p, card, gender))
+}
+
+function checkSingle(typed: string, card: Card, gender?: Gender): boolean {
   if (typed.trim() === '') return false
   const lang: Lang = card.direction === 'fr-nl' ? 'nl' : 'fr'
   const typedVariants = expandOptional(typed)
   if (typedVariants.some((t) => t === '')) return false
-  const forms = (text: string): Form[] =>
-    expandOptional(text).flatMap((variant) => (lang === 'fr' ? frenchArticleForms(variant) : [{ text: variant }]))
+  const forms = (text: string, desGender?: Gender): Form[] =>
+    expandOptional(text).flatMap((variant) =>
+      lang === 'fr' ? frenchArticleForms(variant, desGender) : [{ text: variant }],
+    )
   return typedVariants.every((t) =>
     card.answers.some((a) =>
-      forms(a.text).some(
-        (form) =>
-          matchesForm(t, form.text, lang, a.caseSensitive) && (form.elided === undefined || form.elided === gender),
+      forms(a.text, a.gender).some(
+        (form) => matchesForm(t, form.text, lang, a.caseSensitive) && (form.gender === undefined || form.gender === gender),
       ),
     ),
   )

@@ -3,6 +3,18 @@ import { promptKey } from './checkAnswer'
 
 const DIRECTIONS: Direction[] = ['fr-nl', 'nl-fr']
 
+/** The French prompt never shows the indefinite article (un/une/des), so it does not give away the gender. */
+const withoutArticle = (form: string) => form.replace(/^(un\(e\)|une|un|des)\s+/i, '')
+
+/** A French answer as shown back to him: "une neige" becomes "neige (f)"; "des vacances" takes the entry's gender. */
+function displayForm(form: string, entryGender: Entry['gender']): string {
+  const m = /^(un|une|des)\s+(.+)$/i.exec(form)
+  if (!m) return form
+  const article = m[1].toLowerCase()
+  const gender = article === 'un' ? 'm' : article === 'une' ? 'f' : entryGender
+  return gender ? `${m[2]} (${gender})` : m[2]
+}
+
 export function buildCards(chapters: Chapter[]): Card[] {
   const all: { entry: Entry; chapterId: string }[] = chapters.flatMap((ch) =>
     ch.entries.map((entry) => ({ entry, chapterId: ch.id })),
@@ -41,7 +53,7 @@ export function buildCards(chapters: Chapter[]): Card[] {
         const caseSensitive = (target === 'fr' ? e.frCaps : e.nlCaps) ?? false
         for (const text of e[target]) {
           if (!answers.some((a) => a.text === text && a.caseSensitive === caseSensitive)) {
-            answers.push({ text, caseSensitive })
+            answers.push({ text, caseSensitive, ...(e.gender ? { gender: e.gender } : {}) })
           }
         }
       }
@@ -51,9 +63,9 @@ export function buildCards(chapters: Chapter[]): Card[] {
         entryId: entry.id,
         chapterId,
         direction,
-        prompt: entry[source].join(' / '),
+        prompt: entry[source].map((f) => (source === 'fr' ? withoutArticle(f) : f)).join(' / '),
         answers,
-        display: entry[target].join(' / '),
+        display: entry[target].map((f) => (target === 'fr' ? displayForm(f, entry.gender) : f)).join(' / '),
         ...(entry.hint ? { hint: entry.hint } : {}),
       })
     }

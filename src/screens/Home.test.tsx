@@ -20,7 +20,7 @@ test('Home shows points, best streak and chapter percentage with badge state', (
   setup({ ...emptyProgress(), points: 42, bestStreak: 7, badges: ['ch00'] })
   expect(screen.getByText('42')).toBeInTheDocument()
   expect(screen.getByText('7')).toBeInTheDocument()
-  expect(screen.getByText('Hoofdstuk 0')).toBeInTheDocument()
+  expect(screen.getByText('Hoofdstuk 0 (0/2)')).toBeInTheDocument()
   expect(screen.getByText('0%')).toBeInTheDocument()
   const badge = screen.getByRole('img', { name: /I got this/ })
   expect(badge).toHaveAttribute('data-earned', 'true')
@@ -59,7 +59,7 @@ test('Home mode buttons start the right mode', async () => {
 
 test('Home puts the mode buttons above the chapter tiles', () => {
   setup({ ...emptyProgress(), exam: { cardIds: [cards[0].id], answers: [] } })
-  const tile = screen.getByText('Hoofdstuk 0')
+  const tile = screen.getByText('Hoofdstuk 0 (0/2)')
   for (const name of [/Oefenen/, /Toets/, /^🎓 Examen$/, /Examen hervatten/]) {
     const btn = screen.getByRole('button', { name })
     expect(btn.compareDocumentPosition(tile) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
