@@ -133,12 +133,12 @@ export function promptKey(form: string, lang: Lang): string {
   return stripArticle(n, n, lang)
 }
 
-const FR_ARTICLE = /^(un|une|le|la|les|des|l')\s*/i
+const FR_ARTICLE = /^(?:(une|un|les|le|la|des)\s+|(l')\s*)/i
 const NL_ARTICLE = /^(de|het|een)\s+/i
 
 function splitArticle(s: string, lang: Lang): { article: string; rest: string } {
   const m = (lang === 'fr' ? FR_ARTICLE : NL_ARTICLE).exec(s)
-  return m && m[0].length < s.length ? { article: m[1].toLowerCase(), rest: s.slice(m[0].length) } : { article: '', rest: s }
+  return m && m[0].length < s.length ? { article: (m[1] ?? m[2]).toLowerCase(), rest: s.slice(m[0].length) } : { article: '', rest: s }
 }
 
 /**

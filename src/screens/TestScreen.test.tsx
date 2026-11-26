@@ -461,3 +461,32 @@ test('Test: Enter on a focused radio with a choice made submits', async () => {
   expect(feedback()).toHaveTextContent('✓ Goed! +3')
   expect(Object.keys(prog().cards)).toHaveLength(1)
 })
+
+test('Test: a spelling slip says "Bijna goed", scores as wrong and marks the differing letters', async () => {
+  setup(all.filter((c) => c.display === 'maison (f)'))
+  await typeAnswer('une maisen')
+  expect(feedback()).toHaveTextContent('Bijna goed, let op de spelling')
+  expect(feedback()).not.toHaveTextContent('Fout')
+  expect(feedback()).not.toHaveTextContent('+3')
+  expect(prog().points).toBe(0)
+  expect(prog().currentStreak).toBe(0)
+  expect(prog().cards['ch00-001|nl-fr']).toEqual({ inARow: 0, wrongTotal: 1 })
+  expect(screen.getByText(/Jij typte:/).querySelector('mark.spell-diff')).toHaveTextContent('e')
+  expect(screen.getByText(/Juist:/).querySelector('mark.spell-diff')).toHaveTextContent('o')
+  expect(screen.getByText(/Juist:/)).toHaveTextContent('Juist: maison (f)')
+})
+
+test('Test: a completely wrong answer is still "Fout" without marks', async () => {
+  setup(all.filter((c) => c.display === 'maison (f)'))
+  await typeAnswer('xxx')
+  expect(feedback()).toHaveTextContent('✗ Fout')
+  expect(feedback()).not.toHaveTextContent('Bijna goed')
+  expect(feedback().querySelector('mark')).toBeNull()
+})
+
+test('Test: a wrong article with a slip is plain "Fout"', async () => {
+  setup(all.filter((c) => c.display === 'maison (f)'))
+  await typeAnswer('un maisen')
+  expect(feedback()).toHaveTextContent('✗ Fout')
+  expect(feedback().querySelector('mark')).toBeNull()
+})
