@@ -51,6 +51,10 @@ export function AnswerInput({ onSubmit, askGender, onDontKnow, questionKey, inpu
 
   const change = (text: string) => {
     setValue(text)
+    // A leading un/le or une/la picks the gender; l', les, des or no article leaves the choice alone.
+    const article = /^\s*(un|une|le|la)\s/i.exec(text)?.[1].toLowerCase()
+    if (article === 'un' || article === 'le') setGender('m')
+    else if (article === 'une' || article === 'la') setGender('f')
   }
 
   // A browser focuses the radio when it (or its label) is tapped; hand the focus straight back to

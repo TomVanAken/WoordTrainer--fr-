@@ -338,6 +338,23 @@ test('Test: the article is optional, and the gender is needed even without it', 
   expect(feedback()).toHaveTextContent('✓ Goed!')
 })
 
+test('Test: typing un/le or une/la selects the gender; l\' or no article leaves it alone', async () => {
+  setup(ecoleNlFr)
+  const m = () => screen.getByRole('radio', { name: 'Mannelijk (un)' })
+  const f = () => screen.getByRole('radio', { name: 'Vrouwelijk (une)' })
+  await userEvent.type(input(), 'une ')
+  expect(f()).toBeChecked()
+  await userEvent.clear(input())
+  await userEvent.type(input(), 'le ')
+  expect(m()).toBeChecked()
+  await userEvent.clear(input())
+  await userEvent.type(input(), 'la ')
+  expect(f()).toBeChecked()
+  await userEvent.clear(input())
+  await userEvent.type(input(), "l'")
+  expect(f()).toBeChecked() // unchanged
+})
+
 test('Test: a typed article must still be right, and so must the gender', async () => {
   setup(ecoleNlFr)
   await typeAnswer('un école')
