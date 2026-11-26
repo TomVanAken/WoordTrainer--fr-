@@ -1,4 +1,5 @@
 import type { Card, Gender, Lang } from '../types'
+import { editDistance } from './spelling'
 
 /** Every combination with each "(...)" part kept (without brackets) or dropped. */
 export function expandOptional(form: string): string[] {
@@ -130,4 +131,40 @@ function checkSingle(typed: string, card: Card, gender?: Gender): boolean {
 export function promptKey(form: string, lang: Lang): string {
   const n = normalize(form, false)
   return stripArticle(n, n, lang)
+}
+
+const FR_ARTICLE = /^(un|une|le|la|les|des|l')\s*/i
+const NL_ARTICLE = /^(de|het|een)\s+/i
+
+function splitArticle(s: string, lang: Lang): { article: string; rest: string } {
+  const m = (lang === 'fr' ? FR_ARTICLE : NL_ARTICLE).exec(s)
+  return m && m[0].length < s.length ? { article: m[1].toLowerCase(), rest: s.slice(m[0].length) } : { article: '', rest: s }
+}
+
+/**
+ * For a WRONG single answer that is only a spelling slip: the accepted form it is closest to, else null.
+ * Within 1 edit (words up to 7 letters) or 2 edits (longer); words under 4 letters never count.
+ * A typed article must equal the form's article, and a noun's gender must be right, so those
+ * mistakes stay plainly wrong. Several answers or "(...)" notation are never near misses.
+ */
+export function nearMiss(typed: string, card: Card, gender?: Gender): string | null {
+  if (typed.trim() === '' || /[,;/()]/.test(typed) || checkAnswer(typed, card, gender)) return null
+  const lang: Lang = card.direction === 'fr-nl' ? 'nl' : 'fr'
+  const t = splitArticle(normalize(typed, true), lang)
+  let best: { text: string; d: number } | null = null
+  for (const a of card.answers) {
+    for (const variant of expandOptional(a.text)) {
+      const forms: Form[] = lang === 'fr' ? frenchArticleForms(variant, a.gender) : [{ text: variant }]
+      for (const form of forms) {
+        if (form.gender !== undefined && form.gender !== gender) continue
+        const f = splitArticle(form.text, lang)
+        if (t.article !== '' && t.article !== f.article) continue
+        const len = [...f.rest].length
+        const d = editDistance(t.rest, f.rest)
+        if (len < 4 || d < 1 || d > (len <= 7 ? 1 : 2)) continue
+        if (!best || d < best.d) best = { text: form.text, d }
+      }
+    }
+  }
+  return best ? best.text : null
 }
