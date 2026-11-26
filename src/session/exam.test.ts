@@ -88,3 +88,14 @@ test('an exam saved before genders existed still continues and scores', () => {
   expect(scoreExam(s, byId(cards)).correct).toBe(2)
   expect(scoreExam({ cardIds: cards.map((c) => c.id), answers: ['ok', 'ok', 'ok'] }, byId(cards)).correct).toBe(3)
 })
+
+test('scoreExam flags a spelling slip as almost, but scores it as wrong', () => {
+  const c: Card = { ...card('c', 1), answers: [{ text: 'maandag', caseSensitive: false }], display: 'maandag' }
+  const slip = scoreExam(answerExam(createExam([c.id]), 'maandga'), byId([c]))
+  const far = scoreExam(answerExam(createExam([c.id]), 'xxxxxxx'), byId([c]))
+  expect(slip.results[0].correct).toBe(false)
+  expect(slip.results[0].almost).toBe('maandag')
+  expect(far.results[0].almost).toBeUndefined()
+  expect(slip.percent).toBe(far.percent)
+  expect(slip.correct).toBe(0)
+})

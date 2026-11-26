@@ -1,5 +1,5 @@
 import type { Card, Direction } from '../types'
-import { asksGender, checkAnswer, expandOptional, normalize, promptKey } from './checkAnswer'
+import { asksGender, checkAnswer, expandOptional, nearMiss, normalize, promptKey } from './checkAnswer'
 
 function card(direction: Direction, answers: [string, boolean][]): Card {
   return {
@@ -262,4 +262,36 @@ test.each([
 ])('several accepted answers entered together: %s', (typed, ok) => {
   const c = card('fr-nl', [['verpakken', false], ['inpakken', false]])
   expect(checkAnswer(typed, c)).toBe(ok)
+})
+
+describe('nearMiss', () => {
+  const maison = card('nl-fr', [['une maison', false]])
+  test('a one-letter slip is almost', () => {
+    const form = nearMiss('une maisson', maison, 'f')
+    expect(form).not.toBeNull()
+    expect(form).toContain('maison')
+  })
+  test.each([
+    ['une maison', 'f'], // correct
+    ['un maisson', 'f'], // wrong article
+    ['maisson', 'm'], // wrong gender
+    ['maisson', undefined], // no gender chosen
+    ['', 'f'],
+  ] as const)('not almost: %s (%s)', (typed, gender) => {
+    expect(nearMiss(typed, maison, gender)).toBeNull()
+  })
+  test('far, short, multi-part and bracket answers are not almost', () => {
+    expect(nearMiss('chien', card('fr-nl', [['hond', false]]))).toBeNull()
+    expect(nearMiss('ik', card('fr-nl', [['il', false]]))).toBeNull()
+    expect(nearMiss('hnd', card('fr-nl', [['hond', false]]))).not.toBeNull()
+    expect(nearMiss('verpakken, inpakkn', card('fr-nl', [['inpakken', false]]))).toBeNull()
+    expect(nearMiss('inpakke(n)', card('fr-nl', [['inpakkenn', false]]))).toBeNull()
+  })
+  test('threshold: 1 edit up to 7 letters, 2 edits for longer words', () => {
+    const c = card('fr-nl', [['onderwijzer', false]]) // 11 letters
+    expect(nearMiss('onderwyzer', c)).not.toBeNull() // 1
+    expect(nearMiss('onderwizr', c)).not.toBeNull() // 2
+    expect(nearMiss('onderwiz', c)).toBeNull() // 3
+    expect(nearMiss('kaas', card('fr-nl', [['kaasje', false]]))).toBeNull() // 2 edits on a short word
+  })
 })

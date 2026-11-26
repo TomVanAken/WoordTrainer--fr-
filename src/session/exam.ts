@@ -1,6 +1,6 @@
 import type { Card, ExamState, Gender, Progress } from '../types'
 import { awardBadges, recordTyped } from '../progress/rules'
-import { checkAnswer } from '../cards/checkAnswer'
+import { checkAnswer, nearMiss } from '../cards/checkAnswer'
 
 export function createExam(cardIds: string[]): ExamState {
   return { cardIds, answers: [] }
@@ -20,7 +20,7 @@ export interface ExamResult {
   correct: number
   total: number
   percent: number
-  results: { cardId: string; typed: string; gender?: Gender; correct: boolean }[]
+  results: { cardId: string; typed: string; gender?: Gender; correct: boolean; almost?: string }[]
 }
 
 export function scoreExam(s: ExamState, cardsById: Map<string, Card>): ExamResult {
@@ -28,7 +28,9 @@ export function scoreExam(s: ExamState, cardsById: Map<string, Card>): ExamResul
     const typed = s.answers[i] ?? ''
     const gender = s.genders?.[i] ?? undefined
     const card = cardsById.get(cardId)
-    return { cardId, typed, gender, correct: card ? checkAnswer(typed, card, gender) : false }
+    const correct = card ? checkAnswer(typed, card, gender) : false
+    const almost = card && !correct ? nearMiss(typed, card, gender) : null
+    return { cardId, typed, gender, correct, ...(almost ? { almost } : {}) }
   })
   const correct = results.filter(r => r.correct).length
   const total = results.length
