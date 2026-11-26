@@ -68,7 +68,7 @@ body {
 .feedback-ok { background: #c8f5e8; }
 .feedback-bad { background: #ffd9d9; }
 .feedback-almost { background: #fff0c2; }
-.spell-diff { background: none; color: #b00020; font-weight: 700; text-decoration: underline wavy; }
+.spell-diff { background: none; color: #b00020; font-weight: 700; text-decoration: underline; }
 .feedback-title { font-size: 1.4rem; font-weight: 700; }
 .gender-choice { margin: 0; border: 2px solid var(--purple); border-radius: 14px; padding: 6px 14px 10px; display: flex; flex-wrap: wrap; gap: 4px 18px; background: var(--card); }
 .gender-choice legend { font-weight: 700; padding: 0 4px; }
