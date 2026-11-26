@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Chapter } from '../types.ts'
+import type { Chapter, Direction } from '../types.ts'
 import type { Mode } from './Home.tsx'
 
 type Props = {
@@ -7,9 +7,17 @@ type Props = {
   mode: Mode
   /** An exam is saved; starting a new one replaces it. */
   hasSavedExam?: boolean
-  onConfirm: (chapterIds: string[]) => void
+  /** `directions` is always both for an exam. */
+  onConfirm: (chapterIds: string[], directions: Direction[]) => void
   onBack: () => void
 }
+
+const BOTH: Direction[] = ['fr-nl', 'nl-fr']
+const DIRECTION_CHOICES: { label: string; value: Direction[] }[] = [
+  { label: 'FR → NL', value: ['fr-nl'] },
+  { label: 'NL → FR', value: ['nl-fr'] },
+  { label: 'Beide richtingen', value: BOTH },
+]
 
 const TITLES: Record<Mode, string> = { practice: 'Oefenen', test: 'Toets', exam: 'Examen' }
 
@@ -17,6 +25,8 @@ export function ChapterPicker({ chapters, mode, hasSavedExam, onConfirm, onBack 
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(mode === 'exam' ? chapters.map((c) => c.id) : []),
   )
+
+  const [directions, setDirections] = useState<Direction[]>(BOTH)
 
   const toggle = (id: string) =>
     setSelected((s) => {
@@ -37,6 +47,22 @@ export function ChapterPicker({ chapters, mode, hasSavedExam, onConfirm, onBack 
           Niets
         </button>
       </div>
+      {mode !== 'exam' && (
+        <fieldset className="checks">
+          <legend>Richting</legend>
+          {DIRECTION_CHOICES.map((d) => (
+            <label key={d.label} className="check">
+              <input
+                type="radio"
+                name="direction"
+                checked={d.value.join() === directions.join()}
+                onChange={() => setDirections(d.value)}
+              />
+              <span>{d.label}</span>
+            </label>
+          ))}
+        </fieldset>
+      )}
       <ul className="checks">
         {chapters.map((ch) => (
           <li key={ch.id}>
@@ -51,7 +77,12 @@ export function ChapterPicker({ chapters, mode, hasSavedExam, onConfirm, onBack 
         type="button"
         className="btn btn-primary"
         disabled={selected.size === 0}
-        onClick={() => onConfirm(chapters.filter((c) => selected.has(c.id)).map((c) => c.id))}
+        onClick={() =>
+          onConfirm(
+            chapters.filter((c) => selected.has(c.id)).map((c) => c.id),
+            mode === 'exam' ? BOTH : directions,
+          )
+        }
       >
         {mode === 'exam' && hasSavedExam ? 'Nieuw examen (het vorige vervalt)' : 'Starten'}
       </button>

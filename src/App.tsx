@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { awardBadges } from './progress/rules.ts'
-import type { Chapter } from './types.ts'
+import type { Chapter, Direction } from './types.ts'
 import { ChapterGate } from './components/ChapterGate.tsx'
 import { chaptersBaseUrl, loadChapters } from './data/loadChapters.ts'
 import { buildCards, cardsForChapters } from './cards/buildCards.ts'
@@ -15,7 +15,7 @@ import { Settings } from './screens/Settings.tsx'
 export type Screen =
   | { name: 'home' }
   | { name: 'pick'; mode: Mode }
-  | { name: 'practice' | 'test'; chapterIds: string[] }
+  | { name: 'practice' | 'test'; chapterIds: string[]; directions: Direction[] }
   | { name: 'exam'; chapterIds: string[] | null /* null = resume */ }
   | { name: 'settings' }
 
@@ -45,8 +45,12 @@ function Trainer({ chapters, failed }: { chapters: Chapter[]; failed: string[] }
           mode={screen.mode}
           hasSavedExam={progress.exam !== null}
           onBack={home}
-          onConfirm={(chapterIds) =>
-            setScreen(screen.mode === 'exam' ? { name: 'exam', chapterIds } : { name: screen.mode, chapterIds })
+          onConfirm={(chapterIds, directions) =>
+            setScreen(
+              screen.mode === 'exam'
+                ? { name: 'exam', chapterIds }
+                : { name: screen.mode, chapterIds, directions },
+            )
           }
         />
       )
@@ -66,7 +70,7 @@ function Trainer({ chapters, failed }: { chapters: Chapter[]; failed: string[] }
       return (
         <Round
           key={screen.name}
-          cards={cardsForChapters(cards, screen.chapterIds)}
+          cards={cardsForChapters(cards, screen.chapterIds).filter((c) => screen.directions.includes(c.direction))}
           allCards={cards}
           chapterTitles={chapterTitles}
           progress={progress}
